@@ -128,12 +128,18 @@ tbody td{padding:9px 12px;color:var(--brown);vertical-align:middle}
 .rep-stat .rl{font-size:0.72rem;color:#7c3aed;text-transform:uppercase;margin-top:3px}
 .dstat{background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:10px;padding:14px;text-align:center}
 .dstat .dv{font-size:1.4rem;font-weight:900}
-.dstat .dl{font-size:0.7rem;text-transform:uppercase;margin-top:3px;color:#1d4ed8}
+.dstat .dl{font-size:0.70rem;text-transform:uppercase;margin-top:3px;color:#1d4ed8}
 .del-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F2E8DF;flex-wrap:wrap;gap:8px}
 @media(max-width:640px){.dh{padding:16px 14px 0}.kpis{grid-template-columns:repeat(2,1fr)}.content{padding:16px 12px 32px}.dh-top{flex-direction:column;align-items:flex-start}}
 </style>
 </head>
 <body>
+
+<div id="loading-overlay" style="position:fixed;inset:0;background:rgba(26,15,10,0.95);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:Arial,sans-serif;">
+  <div style="font-size:3rem;margin-bottom:15px;animation:spin 1s linear infinite;">🥛</div>
+  <div style="font-size:1.2rem;font-weight:bold;letter-spacing:1px;" id="loading-text">Firebase से डेटा लोड हो रहा है...</div>
+</div>
+<style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>
 
 <div class="dh">
   <div class="dh-top">
@@ -171,7 +177,6 @@ tbody td{padding:9px 12px;color:var(--brown);vertical-align:middle}
     <button class="mt emp-tab" onclick="switchMain('employee')">👔 Employees</button>
   </div>
 
-  <!-- DASHBOARD -->
   <div class="panel on" id="panel-dashboard">
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:16px">
       <div class="card">
@@ -199,790 +204,945 @@ tbody td{padding:9px 12px;color:var(--brown);vertical-align:middle}
     </div>
   </div>
 
-  <!-- CUSTOMER -->
   <div class="panel" id="panel-customer">
     <div class="stabs">
       <button class="st on" onclick="switchSub('register')">➕ Register</button>
-      <button class="st" onclick="switchSub('clist')">👥 All Customers</button>
-      <button class="st" onclick="switchSub('csearch')">🔍 Search</button>
-    </div>
-    <div class="panel on" id="sub-register">
-      <div class="card">
-        <div class="ct">🆕 Register New Customer</div>
-        <div class="fgrid">
-          <div class="fg"><label>Customer Name *</label><input id="rn" placeholder="Poora naam"></div>
-          <div class="fg"><label>Mobile * (= ID)</label><input type="tel" id="rm" maxlength="10" placeholder="10 digit mobile"></div>
-          <div class="fg"><label>Address</label><input id="ra" placeholder="Mohalla / Colony"></div>
-          <div class="fg"><label>Referral Employee ID (Optional)</label><input id="r-ref" maxlength="12" placeholder="12 digit Aadhar"></div>
-        </div>
-        <button class="btn bp" onclick="registerCustomer()">✅ Register</button>
-        <button class="btn bg" onclick="clearReg()" style="margin-left:8px">🔄 Clear</button>
-      </div>
-    </div>
-    <div class="panel" id="sub-clist">
-      <div class="card">
-        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
-          <input type="text" id="f-s" placeholder="🔍 Search..." oninput="renderCList()" style="flex:1;min-width:140px;border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.85rem;outline:none;color:var(--brown)">
-          <select id="f-z" onchange="renderCList()" style="border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.82rem;outline:none;color:var(--brown)">
-            <option value="">All Zones</option>
-            <option value="green">🟢 Green</option><option value="blue">🔵 Blue</option>
-            <option value="yellow">🟡 Yellow</option><option value="red">🔴 Red</option>
-          </select>
-          <button class="btn bxl" onclick="exportExcel()">📊 Excel</button>
-        </div>
-        <div class="tw">
-          <table><thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Location</th><th>Last Order</th><th>Next Expected</th><th>Zone</th><th>Actions</th></tr></thead>
-          <tbody id="c-tbody"></tbody></table>
-          <div id="c-empty" style="display:none;text-align:center;padding:40px;color:#ccc">Koi customer nahi mila</div>
-        </div>
-      </div>
-    </div>
-    <div class="panel" id="sub-csearch">
-      <div class="sh-box">
-        <h2>🔍 Customer Search</h2>
-        <p>Mobile number dalein — poori history ek jagah</p>
-        <div class="sb">
-          <input type="tel" id="cs-in" maxlength="10" placeholder="10-digit mobile..." oninput="if(this.value.length>=10)doCSrch()">
-          <button onclick="doCSrch()">Search</button>
-        </div>
-      </div>
-      <div id="cs-result"></div>
-    </div>
-  </div>
+      <button class="st" onclick="switchSub('clist')">👥 All Customers</button> <button class="st" onclick="switchSub('csearch')">🔍 Search</button> </div> <div class="panel on" id="sub-register"> <div class="card"> <div class="ct">🆕 Register New Customer</div> <div class="fgrid"> <div class="fg"><label>Customer Name *</label><input id="rn" placeholder="Poora naam"></div> <div class="fg"><label>Mobile * (= ID)</label><input type="tel" id="rm" maxlength="10" placeholder="10 digit mobile"></div> <div class="fg"><label>Address</label><input id="ra" placeholder="Mohalla / Colony"></div> <div class="fg"><label>Referral Employee ID (Optional)</label><input id="r-ref" maxlength="12" placeholder="12 digit Aadhar"></div> </div> <button class="btn bp" onclick="registerCustomer()">✅ Register</button> <button class="btn bg" onclick="clearReg()" style="margin-left:8px">🔄 Clear</button> </div> </div> <div class="panel" id="sub-clist"> <div class="card"> <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center"> <input type="text" id="f-s" placeholder="🔍 Search..." oninput="renderCList()" style="flex:1;min-width:140px;border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.85rem;outline:none;color:var(--brown)"> <select id="f-z" onchange="renderCList()" style="border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.82rem;outline:none;color:var(--brown)"> <option value="">All Zones</option> <option value="green">🟢 Green</option><option value="blue">🔵 Blue</option> <option value="yellow">🟡 Yellow</option><option value="red">🔴 Red</option> </select> <button class="btn bxl" onclick="exportExcel()">📊 Excel</button> </div> <div class="tw"> <table><thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Location</th><th>Last Order</th><th>Next Expected</th><th>Zone</th><th>Actions</th></tr></thead> <tbody id="c-tbody"></tbody></table> <div id="c-empty" style="display:none;text-align:center;padding:40px;color:#ccc">Koi customer nahi mila</div> </div> </div> </div> <div class="panel" id="sub-csearch"> <div class="sh-box"> <h2>🔍 Customer Search</h2> <p>Mobile number dalein — poori history ek jagah</p> <div class="sb"> <input type="tel" id="cs-in" maxlength="10" placeholder="10-digit mobile..." oninput="if(this.value.length>=10)doCSrch()"> <button onclick="doCSrch()">Search</button> </div> </div> <div id="cs-result"></div> </div> </div> <div class="panel" id="panel-order"> <div class="card"> <div class="ct">🛒 Add New Order</div> <div class="fgrid"> <div class="fg"><label>Customer Mobile *</label><input type="tel" id="om" maxlength="10" placeholder="10 digit" oninput="lookupC()"></div> <div class="fg"><label>Customer Name</label><input id="on" readonly placeholder="Auto-fill" style="background:#F5F0EA;color:#999"></div> <div class="fg"><label>Order Date</label><input type="date" id="od"></div> <div class="fg"><label>Next Expected Date</label><input type="date" id="oexp"></div> <div class="fg"><label>Note</label><input id="ono" placeholder="Home delivery, urgent etc."></div> </div> <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--amber);margin-bottom:8px">Products</div> <div class="pgrid" id="prod-grid"></div> <div class="tb2"> <div><div class="tl2">Order Total</div><div class="tv" id="o-total">₹0</div></div> <div style="display:flex;gap:8px;flex-wrap:wrap"> <button class="btn bp" onclick="addOrder()">✅ Save Order</button> <button class="btn bwa" onclick="sendWABill()">📱 WA Bill</button> </div> </div> </div> <div class="card"> <div class="ct">🧺 Manage Products</div> <div style="background:var(--cream);border-radius:10px;padding:14px;margin-bottom:14px"> <div class="fgrid" style="margin-bottom:10px"> <div class="fg"><label>Product Name *</label><input id="np-name" placeholder="e.g. Lassi"></div> <div class="fg"><label>Emoji</label><input id="np-icon" placeholder="🥛" maxlength="4"></div> <div class="fg"><label>Unit</label><select id="np-unit"><option value="L">Litre</option><option value="Kg">Kilogram</option><option value="Pcs">Pieces</option><option value="g">Grams</option><option value="Packet">Packet</option></select></div> <div class="fg"><label>Default Qty</label><input type="number" id="np-qty" value="1" min="0.1" step="0.1"></div> </div> <button class="btn bp" onclick="addProduct()">➕ Add Product</button> </div> <div id="prod-list-manage" style="font-size:0.82rem"></div> </div> </div> <div class="panel" id="panel-today"> <div class="card"> <div class="ct">📅 Today's Expected Orders</div> <p style="font-size:0.78rem;color:#999;margin-bottom:12px">Jin customers ki aaj expected delivery date hai</p> <div id="today-list"></div> </div> </div> <div class="panel" id="panel-delivery"> <div class="del-header"><h2>🥛 Daily Milk Delivery</h2><p>Roz ki delivery, payment aur rate management</p></div> <div class="stabs"> <button class="st del on" onclick="switchDel('dmark')">📋 Mark Delivery</button> <button class="st del" onclick="switchDel('dhistory')">📅 History</button> <button class="st del" onclick="switchDel('dpayment')">💰 Payment</button> <button class="st del" onclick="switchDel('drate')">⚙️ Rate Set</button> <button class="st del" onclick="switchDel('dsummary')">📊 Summary</button> </div> <div class="panel on" id="dsub-dmark"> <div class="card"> <div class="ct">📋 Aaj ki Delivery Mark Karo</div> <div style="font-size:0.8rem;color:#999;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"> <span id="del-today-lbl"></span> <input type="date" id="del-date" onchange="renderDeliveryMark()" style="border:2px solid #EDE0D4;border-radius:9px;padding:7px 12px;font-size:0.82rem;outline:none;color:var(--brown)"> </div> <div id="delivery-list"></div> <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"> <button class="btn bblu" onclick="saveDeliveries()">✅ Save Delivery</button> <button class="btn bwa" onclick="sendAllDeliveryWA()">📱 Referral ko WA</button> </div> </div> </div> <div class="panel" id="dsub-dhistory"> <div class="card"> <div class="ct">📅 Date-wise Delivery History</div> <div class="fgrid" style="margin-bottom:14px"> <div class="fg"><label>Customer Mobile</label><input type="tel" id="dh-mob" maxlength="10" placeholder="Mobile dalein..." oninput="if(this.value.length>=10)renderDelHistory()"></div> <div class="fg"><label>Month</label><input type="month" id="dh-month" onchange="renderDelHistory()"></div> </div> <div id="del-history-result"><div style="color:#ccc;text-align:center;padding:30px">Mobile number dalein</div></div> </div> <div class="card"> <div class="ct">📆 Sabhi Customers — Date Wise</div> <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center"> <div class="fg" style="margin:0;flex:1"> <label>Date Select Karo</label> <input type="date" id="dw-date" onchange="renderDateWise()" style="border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.85rem;outline:none;color:var(--brown);width:100%"> </div> </div> <div id="datewise-result"><div style="color:#ccc;text-align:center;padding:20px">Date select karein</div></div> </div> </div> <div class="panel" id="dsub-dpayment"> <div class="card"> <div class="ct">💰 Payment Record Karo</div> <div class="fgrid"> <div class="fg"><label>Customer Mobile *</label><input type="tel" id="pay-mob" maxlength="10" placeholder="10 digit" oninput="lookupPayC()"></div> <div class="fg"><label>Customer Name</label><input id="pay-name" readonly placeholder="Auto-fill" style="background:#F5F0EA;color:#999"></div> <div class="fg"><label>Payment Date</label><input type="date" id="pay-date"></div> <div class="fg"><label>Amount (₹)</label><input type="number" id="pay-amt" placeholder="Kitna mila"></div> <div class="fg"><label>Mode (Cash/UPI etc.)</label><input id="pay-note" placeholder="Cash / UPI / Cheque"></div> </div> <div style="background:var(--cream);border-radius:10px;padding:14px;margin-bottom:14px" id="pay-pending-box"> <div style="color:#999;font-size:0.82rem;text-align:center">Customer mobile dalein to pending amount dikhega</div> </div> <button class="btn bp" onclick="savePayment()">✅ Payment Save</button> </div> <div class="card"> <div class="ct">💳 Payment History</div> <div class="fgrid" style="margin-bottom:12px"> <div class="fg"><label>Customer Mobile</label><input type="tel" id="payh-mob" maxlength="10" placeholder="Mobile dalein..." oninput="if(this.value.length>=10)renderPayHistory()"></div> <div class="fg"><label>Month</label><input type="month" id="payh-month" onchange="renderPayHistory()"></div> </div> <div id="pay-history-result"><div style="color:#ccc;text-align:center;padding:20px">Mobile number dalein</div></div> </div> </div> <div class="panel" id="dsub-drate"> <div class="card"> <div class="ct">⚙️ Customer Rate &amp; Delivery Setup</div> <p style="font-size:0.78rem;color:#999;margin-bottom:16px">Customer ko delivery list mein add karo aur rate set karo</p> <div id="rate-list"></div> </div> </div> <div class="panel" id="dsub-dsummary"> <div class="card"> <div class="ct">📊 Monthly Delivery Summary</div> <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center"> <input type="month" id="sum-month" onchange="renderSummary()" style="border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.85rem;outline:none;color:var(--brown)"> <button class="btn bxl" onclick="exportDeliveryExcel()">📊 Excel Export</button> </div> <div id="summary-result"><div style="color:#ccc;text-align:center;padding:30px">Month select karein</div></div> </div> </div> </div> <div class="panel" id="panel-employee"> <div class="emp-header"><h2>👔 Employees Corner</h2><p>Management, referrals & performance</p></div> <div class="stabs"> <button class="st emp on" onclick="switchEmp('ereg')">➕ Register</button> <button class="st emp" onclick="switchEmp('elist')">👥 All</button> <button class="st emp" onclick="switchEmp('esearch')">🔍 Search</button> <button class="st emp" onclick="switchEmp('ereport')">📊 Report</button> </div> <div class="panel on" id="esub-ereg"> <div class="card"> <div class="ct" style="color:#5b21b6">🆕 Register Employee</div> <div class="fgrid"> <div class="fg"><label>Name *</label><input id="en" placeholder="Poora naam"></div> <div class="fg"><label>Aadhar No. * (= ID)</label><input type="tel" id="ea" maxlength="12" placeholder="12 digit"></div> <div class="fg"><label>Mobile *</label><input type="tel" id="em" maxlength="10" placeholder="10 digit"></div> <div class="fg"><label>Address</label><input id="eaddr" placeholder="Address"></div> <div class="fg"><label>Role</label><input id="erole" placeholder="e.g. Delivery Boy / Manager"></div> </div> <button class="btn bemp" onclick="registerEmployee()">✅ Save Employee</button> </div> </div> <div class="panel" id="sub-elist"> <div class="card"> <div class="tw"> <table><thead><tr><th>Aadhar (ID)</th><th>Name</th><th>Mobile</th><th>Role</th><th>Referrals</th></tr></thead> <tbody id="e-tbody"></tbody></table> </div> </div> </div> <div class="panel" id="sub-esearch"> <div class="sh-box" style="background:linear-gradient(135deg,#2e1065,#5b21b6)"> <h2>🔍 Employee Search</h2> <p>Aadhar card number dalein</p> <div class="sb"> <input type="tel" id="es-in" maxlength="12" placeholder="12-digit Aadhar..." oninput="if(this.value.length>=12)doESrch()"> <button onclick="doESrch()" style="background:var(--amber)">Search</button> </div> </div> <div id="es-result"></div> </div> <div class="panel" id="sub-ereport"> <div class="card"> <div class="ct">📊 Employee Performance Report</div> <div id="e-report-div"></div> </div> </div> </div> </div> <div class="toast" id="toast"></div> <div class="mo" id="mo-bc"><div class="modal"><div class="mh"><h2>📢 Broadcast WhatsApp Message</h2><button class="mx" onclick="closeBcast()">✕</button></div><div class="fg"><label>Select Target Group</label><select id="bc-grp"><option value="all">Sabhi Customers</option><option value="green">🟢 Green Zone</option><option value="blue">🔵 Blue Zone</option><option value="yellow">🟡 Yellow Zone</option><option value="red">🔴 Red Zone</option></select></div><div class="fg"><label>Message Template</label><textarea id="bc-msg" rows="5" placeholder="Message likhein... Use {name} for Customer name"></textarea></div><button class="btn bwa" onclick="sendBcast()">🚀 Send Via WhatsApp Web</button></div></div>
 
-  <!-- ORDER -->
-  <div class="panel" id="panel-order">
-    <div class="card">
-      <div class="ct">🛒 Add New Order</div>
-      <div class="fgrid">
-        <div class="fg"><label>Customer Mobile *</label><input type="tel" id="om" maxlength="10" placeholder="10 digit" oninput="lookupC()"></div>
-        <div class="fg"><label>Customer Name</label><input id="on" readonly placeholder="Auto-fill" style="background:#F5F0EA;color:#999"></div>
-        <div class="fg"><label>Order Date</label><input type="date" id="od"></div>
-        <div class="fg"><label>Next Expected Date</label><input type="date" id="oexp"></div>
-        <div class="fg"><label>Note</label><input id="ono" placeholder="Home delivery, urgent etc."></div>
-      </div>
-      <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--amber);margin-bottom:8px">Products</div>
-      <div class="pgrid" id="prod-grid"></div>
-      <div class="tb2">
-        <div><div class="tl2">Order Total</div><div class="tv" id="o-total">₹0</div></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn bp" onclick="addOrder()">✅ Save Order</button>
-          <button class="btn bwa" onclick="sendWABill()">📱 WA Bill</button>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="ct">🧺 Manage Products</div>
-      <div style="background:var(--cream);border-radius:10px;padding:14px;margin-bottom:14px">
-        <div class="fgrid" style="margin-bottom:10px">
-          <div class="fg"><label>Product Name *</label><input id="np-name" placeholder="e.g. Lassi"></div>
-          <div class="fg"><label>Emoji</label><input id="np-icon" placeholder="🥛" maxlength="4"></div>
-          <div class="fg"><label>Unit</label><select id="np-unit"><option value="L">Litre</option><option value="Kg">Kilogram</option><option value="Pcs">Pieces</option><option value="g">Grams</option><option value="Packet">Packet</option></select></div>
-          <div class="fg"><label>Default Qty</label><input type="number" id="np-qty" value="1" min="0.1" step="0.1"></div>
-        </div>
-        <button class="btn bp" onclick="addProduct()">➕ Add Product</button>
-      </div>
-      <div id="prod-list-manage" style="font-size:0.82rem"></div>
-    </div>
-  </div>
-
-  <!-- TODAY -->
-  <div class="panel" id="panel-today">
-    <div class="card">
-      <div class="ct">📅 Today's Expected Orders</div>
-      <p style="font-size:0.78rem;color:#999;margin-bottom:12px">Jin customers ki aaj expected delivery date hai</p>
-      <div id="today-list"></div>
-    </div>
-  </div>
-
-  <!-- DELIVERY SECTION -->
-  <div class="panel" id="panel-delivery">
-    <div class="del-header"><h2>🥛 Daily Milk Delivery</h2><p>Roz ki delivery, payment aur rate management</p></div>
-    <div class="stabs">
-      <button class="st del on" onclick="switchDel('dmark')">📋 Mark Delivery</button>
-      <button class="st del" onclick="switchDel('dhistory')">📅 History</button>
-      <button class="st del" onclick="switchDel('dpayment')">💰 Payment</button>
-      <button class="st del" onclick="switchDel('drate')">⚙️ Rate Set</button>
-      <button class="st del" onclick="switchDel('dsummary')">📊 Summary</button>
-    </div>
-
-    <!-- MARK DELIVERY -->
-    <div class="panel on" id="dsub-dmark">
-      <div class="card">
-        <div class="ct">📋 Aaj ki Delivery Mark Karo</div>
-        <div style="font-size:0.8rem;color:#999;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-          <span id="del-today-lbl"></span>
-          <input type="date" id="del-date" onchange="renderDeliveryMark()" style="border:2px solid #EDE0D4;border-radius:9px;padding:7px 12px;font-size:0.82rem;outline:none;color:var(--brown)">
-        </div>
-        <div id="delivery-list"></div>
-        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn bblu" onclick="saveDeliveries()">✅ Save Delivery</button>
-          <button class="btn bwa" onclick="sendAllDeliveryWA()">📱 Referral ko WA</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- HISTORY -->
-    <div class="panel" id="dsub-dhistory">
-      <div class="card">
-        <div class="ct">📅 Date-wise Delivery History</div>
-        <div class="fgrid" style="margin-bottom:14px">
-          <div class="fg"><label>Customer Mobile</label><input type="tel" id="dh-mob" maxlength="10" placeholder="Mobile dalein..." oninput="if(this.value.length>=10)renderDelHistory()"></div>
-          <div class="fg"><label>Month</label><input type="month" id="dh-month" onchange="renderDelHistory()"></div>
-        </div>
-        <div id="del-history-result"><div style="color:#ccc;text-align:center;padding:30px">Mobile number dalein</div></div>
-      </div>
-      <!-- DATE WISE ALL CUSTOMERS -->
-      <div class="card">
-        <div class="ct">📆 Sabhi Customers — Date Wise</div>
-        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-          <div class="fg" style="margin:0;flex:1">
-            <label>Date Select Karo</label>
-            <input type="date" id="dw-date" onchange="renderDateWise()" style="border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.85rem;outline:none;color:var(--brown);width:100%">
-          </div>
-        </div>
-        <div id="datewise-result"><div style="color:#ccc;text-align:center;padding:20px">Date select karein</div></div>
-      </div>
-    </div>
-
-    <!-- PAYMENT -->
-    <div class="panel" id="dsub-dpayment">
-      <div class="card">
-        <div class="ct">💰 Payment Record Karo</div>
-        <div class="fgrid">
-          <div class="fg"><label>Customer Mobile *</label><input type="tel" id="pay-mob" maxlength="10" placeholder="10 digit" oninput="lookupPayC()"></div>
-          <div class="fg"><label>Customer Name</label><input id="pay-name" readonly placeholder="Auto-fill" style="background:#F5F0EA;color:#999"></div>
-          <div class="fg"><label>Payment Date</label><input type="date" id="pay-date"></div>
-          <div class="fg"><label>Amount (₹)</label><input type="number" id="pay-amt" placeholder="Kitna mila"></div>
-          <div class="fg"><label>Mode (Cash/UPI etc.)</label><input id="pay-note" placeholder="Cash / UPI / Cheque"></div>
-        </div>
-        <div style="background:var(--cream);border-radius:10px;padding:14px;margin-bottom:14px" id="pay-pending-box">
-          <div style="color:#999;font-size:0.82rem;text-align:center">Customer mobile dalein to pending amount dikhega</div>
-        </div>
-        <button class="btn bp" onclick="savePayment()">✅ Payment Save</button>
-      </div>
-      <div class="card">
-        <div class="ct">💳 Payment History</div>
-        <div class="fgrid" style="margin-bottom:12px">
-          <div class="fg"><label>Customer Mobile</label><input type="tel" id="payh-mob" maxlength="10" placeholder="Mobile dalein..." oninput="if(this.value.length>=10)renderPayHistory()"></div>
-          <div class="fg"><label>Month</label><input type="month" id="payh-month" onchange="renderPayHistory()"></div>
-        </div>
-        <div id="pay-history-result"><div style="color:#ccc;text-align:center;padding:20px">Mobile number dalein</div></div>
-      </div>
-    </div>
-
-    <!-- RATE SET -->
-    <div class="panel" id="dsub-drate">
-      <div class="card">
-        <div class="ct">⚙️ Customer Rate &amp; Delivery Setup</div>
-        <p style="font-size:0.78rem;color:#999;margin-bottom:16px">Customer ko delivery list mein add karo aur rate set karo</p>
-        <div id="rate-list"></div>
-      </div>
-    </div>
-
-    <!-- SUMMARY -->
-    <div class="panel" id="dsub-dsummary">
-      <div class="card">
-        <div class="ct">📊 Monthly Delivery Summary</div>
-        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-          <input type="month" id="sum-month" onchange="renderSummary()" style="border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.85rem;outline:none;color:var(--brown)">
-          <button class="btn bxl" onclick="exportDeliveryExcel()">📊 Excel Export</button>
-        </div>
-        <div id="summary-result"><div style="color:#ccc;text-align:center;padding:30px">Month select karein</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- EMPLOYEE -->
-  <div class="panel" id="panel-employee">
-    <div class="emp-header"><h2>👔 Employees Corner</h2><p>Management, referrals & performance</p></div>
-    <div class="stabs">
-      <button class="st emp on" onclick="switchEmp('ereg')">➕ Register</button>
-      <button class="st emp" onclick="switchEmp('elist')">👥 All</button>
-      <button class="st emp" onclick="switchEmp('esearch')">🔍 Search</button>
-      <button class="st emp" onclick="switchEmp('ereport')">📊 Report</button>
-    </div>
-    <div class="panel on" id="esub-ereg">
-      <div class="card">
-        <div class="ct" style="color:#5b21b6">🆕 Register Employee</div>
-        <div class="fgrid">
-          <div class="fg"><label>Name *</label><input id="en" placeholder="Poora naam"></div>
-          <div class="fg"><label>Aadhar No. * (= ID)</label><input type="tel" id="ea" maxlength="12" placeholder="12 digit"></div>
-          <div class="fg"><label>Mobile *</label><input type="tel" id="em" maxlength="10" placeholder="10 digit"></div>
-          <div class="fg"><label>Address</label><input id="eaddr" placeholder="Address"></div>
-          <div class="fg"><label>Role</label><input id="erole" placeholder="e.g. Sales Rep"></div>
-          <div class="fg"><label>Join Date</label><input type="date" id="ejoin"></div>
-        </div>
-        <button class="btn bemp" onclick="registerEmployee()">✅ Register</button>
-        <button class="btn bg" onclick="clearEmp()" style="margin-left:8px">🔄 Clear</button>
-      </div>
-    </div>
-    <div class="panel" id="esub-elist">
-      <div class="card">
-        <div class="tw">
-          <table><thead><tr><th>Employee ID</th><th>Name</th><th>Mobile</th><th>Role</th><th>Join</th><th>Referrals</th><th>Actions</th></tr></thead>
-          <tbody id="e-tbody"></tbody></table>
-          <div id="e-empty" style="display:none;text-align:center;padding:40px;color:#ccc">Koi employee nahi</div>
-        </div>
-      </div>
-    </div>
-    <div class="panel" id="esub-esearch">
-      <div class="sh-box" style="background:linear-gradient(135deg,#2e1065,#5b21b6)">
-        <h2>🔍 Employee Search</h2>
-        <p>Aadhar ID dalein</p>
-        <div class="sb">
-          <input type="tel" id="es-in" maxlength="12" placeholder="12-digit Aadhar ID..." oninput="if(this.value.length>=12)doESrch()">
-          <button onclick="doESrch()" style="background:linear-gradient(135deg,#7c3aed,#5b21b6)">Search</button>
-        </div>
-      </div>
-      <div id="es-result"></div>
-    </div>
-    <div class="panel" id="esub-ereport">
-      <div class="card">
-        <div class="ct" style="color:#5b21b6">📊 Performance Report</div>
-        <div class="fg" style="margin-bottom:12px;max-width:300px"><label>Employee</label><select id="rep-emp" onchange="renderReport()"><option value="">-- Select --</option></select></div>
-        <div class="rep-filter">
-          <button class="rf on" onclick="setRepPeriod('week',this)">This Week</button>
-          <button class="rf" onclick="setRepPeriod('month',this)">This Month</button>
-          <button class="rf" onclick="setRepPeriod('year',this)">This Year</button>
-          <button class="rf" onclick="setRepPeriod('all',this)">All Time</button>
-        </div>
-        <div id="rep-body"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODALS -->
-<div class="mo" id="bcast-modal">
-  <div class="modal">
-    <div class="mh"><h2>📢 WA Broadcast</h2><button class="mx" onclick="closeM('bcast-modal')">✕</button></div>
-    <div class="fg" style="margin-bottom:10px"><label>Zone</label><select id="bc-zone" onchange="updateBCList()"><option value="all">All</option><option value="green">🟢 Green</option><option value="blue">🔵 Blue</option><option value="yellow">🟡 Yellow</option><option value="red">🔴 Red</option></select></div>
-    <div class="fg" style="margin-bottom:12px"><label>Message</label><textarea id="bc-msg" rows="5" style="border:2px solid #EDE0D4;border-radius:9px;padding:10px;font-size:0.85rem;resize:vertical;outline:none;width:100%">Namaskar {NAME} ji! 🙏
-Shree Kamal Ghee & Dairy ki taraf se!
-Taaza products available hain.
-✨ Promise of Purity and Taste.</textarea></div>
-    <div id="bc-list" style="max-height:150px;overflow-y:auto;margin-bottom:12px;border:2px solid #EDE0D4;border-radius:9px;padding:10px;font-size:0.8rem"></div>
-    <div style="display:flex;gap:8px"><button class="btn bwa" onclick="broadcastWA()">📱 Send</button><button class="btn bg" onclick="closeM('bcast-modal')">Cancel</button></div>
-  </div>
-</div>
-<div class="mo" id="next-modal">
-  <div class="modal">
-    <div class="mh"><h2>📅 Next Expected Date</h2><button class="mx" onclick="closeM('next-modal')">✕</button></div>
-    <p style="font-size:0.82rem;color:#999;margin-bottom:14px" id="nm-cname"></p>
-    <div class="fg"><label>Next Expected Date</label><input type="date" id="nm-date"></div>
-    <div style="display:flex;gap:8px;margin-top:14px"><button class="btn bp" onclick="saveNextDate()">✅ Save</button><button class="btn bg" onclick="closeM('next-modal')">Cancel</button></div>
-  </div>
-</div>
-<div class="mo" id="view-modal">
-  <div class="modal">
-    <div class="mh"><h2 id="vm-name">Customer</h2><button class="mx" onclick="closeM('view-modal')">✕</button></div>
-    <div id="vm-body"></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;justify-content:flex-end">
-      <button class="btn bwa" id="vm-wa">📱 WA</button>
-      <button class="btn bxl" onclick="exportSingleExcel()">📊 Excel</button>
-      <button class="btn bd" id="vm-del">🗑️ Delete</button>
-      <button class="btn bg" onclick="closeM('view-modal')">Close</button>
-    </div>
-  </div>
-</div>
-<div class="toast" id="toast"></div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-// ===== DATA =====
-var DB=JSON.parse(localStorage.getItem('skd_c')||'[]');
-var EDB=JSON.parse(localStorage.getItem('skd_e')||'[]');
-var PRODS=JSON.parse(localStorage.getItem('skd_p')||'null')||[
-  {id:'milk',name:'Milk',icon:'🥛',unit:'L',defQty:1},
-  {id:'chaach',name:'Chaach',icon:'🥤',unit:'L',defQty:1},
-  {id:'ghee',name:'Ghee',icon:'🫙',unit:'Kg',defQty:0.5},
-  {id:'paneer',name:'Paneer',icon:'🧀',unit:'Kg',defQty:0.5},
-  {id:'dahi',name:'Dahi',icon:'🍶',unit:'Kg',defQty:0.5}
+// ==========================================
+// FIREBASE CONFIGURATION
+// ==========================================
+var FIREBASE_URL = "YOUR_FIREBASE_URL_HERE";
+
+if(FIREBASE_URL.endsWith("/")) {
+  FIREBASE_URL = FIREBASE_URL.slice(0, -1);
+}
+
+// Global App States
+var DB = [];
+var PRODUCTS = [
+  {id:"p1",name:"Standard Milk",icon:"🥛",unit:"L",qty:1},
+  {id:"p2",name:"Fresh Paneer",icon:"🧀",unit:"Kg",qty:1},
+  {id:"p3",name:"Pure Desi Ghee",icon:"🫙",unit:"L",qty:1},
+  {id:"p4",name:"Sweet Lassi",icon:"🥤",unit:"Packet",qty:1}
 ];
-var DLVR=JSON.parse(localStorage.getItem('skd_dlvr')||'{}');
-var RATES=JSON.parse(localStorage.getItem('skd_rates')||'{}');
-var PAYMENTS=JSON.parse(localStorage.getItem('skd_pay')||'{}');
-var curMob=null,curNextMob=null,activeZF='',repPeriod='week';
+var EMPLOYEES = [];
+var DEL_RATES = {};
+var DEL_LOGS = {};
+var PAY_LOGS = {};
 
-function saveAll(){localStorage.setItem('skd_c',JSON.stringify(DB));localStorage.setItem('skd_e',JSON.stringify(EDB));localStorage.setItem('skd_p',JSON.stringify(PRODS));updateStats();}
-function saveDLVR(){localStorage.setItem('skd_dlvr',JSON.stringify(DLVR));}
-function saveRATES(){localStorage.setItem('skd_rates',JSON.stringify(RATES));}
-function savePAYMENTS(){localStorage.setItem('skd_pay',JSON.stringify(PAYMENTS));}
+var curZone = '';
 
-function today(){return new Date().toISOString().split('T')[0];}
-function fmtDate(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
-function daysDiff(d){if(!d)return 9999;return Math.floor((new Date()-new Date(d))/86400000);}
-function zone(c){var d=daysDiff(c.orders&&c.orders.length?c.orders[c.orders.length-1].date:null);return d<=7?'green':d<=15?'blue':d<=30?'yellow':'red';}
-function zoneLbl(z){return{green:'Green',blue:'Blue',yellow:'Yellow',red:'Red'}[z]||'—';}
-function ini(n){return n.split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();}
-function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on');},2800);}
-function closeM(id){document.getElementById(id).classList.remove('on');}
-function getPD(p){var n=new Date();if(p==='week'){var d=new Date(n);d.setDate(d.getDate()-d.getDay());return{f:d.toISOString().split('T')[0],t:today()};}if(p==='month'){var m=n.getMonth()+1;return{f:n.getFullYear()+'-'+(m<10?'0':'')+m+'-01',t:today()};}if(p==='year')return{f:n.getFullYear()+'-01-01',t:today()};return{f:'1900-01-01',t:'2100-01-01'};}
-
-(function(){
-  var d=new Date();
-  document.getElementById('dh-date').innerHTML='<span>Aaj</span><b>'+d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})+'</b>';
-  document.getElementById('od').value=today();
-  document.getElementById('ejoin').value=today();
-  document.getElementById('pay-date').value=today();
-  document.getElementById('dw-date').value=today();
-  document.getElementById('del-today-lbl').textContent='Date: '+fmtDate(today());
-  var cm=today().slice(0,7);
-  document.getElementById('dh-month').value=cm;
-  document.getElementById('payh-month').value=cm;
-  document.getElementById('sum-month').value=cm;
-})();
-
-// ===== STATS =====
-function updateStats(){
-  var tot=DB.length,orders=0,rev=0,g=0,b=0,y=0,r=0;
-  DB.forEach(function(c){orders+=c.orders?c.orders.length:0;rev+=c.orders?c.orders.reduce(function(s,o){return s+(o.total||0);},0):0;var z=zone(c);if(z==='green')g++;else if(z==='blue')b++;else if(z==='yellow')y++;else r++;});
-  var td=today();
-  var todayDlvr=Object.values(DLVR).reduce(function(s,arr){var t=arr.find(function(d){return d.date===td;});return s+(t?t.qty:0);},0);
-  document.getElementById('k-total').textContent=tot;
-  document.getElementById('k-orders').textContent=orders;
-  document.getElementById('k-rev').textContent='₹'+rev.toFixed(0);
-  document.getElementById('k-dlvr').textContent=todayDlvr.toFixed(1)+'L';
-  [['g',g],['b',b],['y',y],['r',r]].forEach(function(x){
-    var e1=document.getElementById('zn-'+x[0]);if(e1)e1.textContent=x[1];
-    var e2=document.getElementById('zs-'+x[0]);if(e2)e2.textContent=x[1];
-  });
+// Cloud Sync Helpers
+function saveCloud(node, data, cb) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("PUT", FIREBASE_URL + "/" + node + ".json", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.onreadystatechange = function() {
+    if(xhr.readyState === 4) {
+      if(cb) cb(xhr.status >= 200 && xhr.status < 300);
+    }
+  };
+  xhr.send(JSON.stringify(data));
 }
 
-// ===== TABS =====
-function switchMain(t){
-  var ns=['dashboard','customer','order','today','delivery','employee'];
-  document.querySelectorAll('.mt').forEach(function(el,i){el.classList.remove('on');if(ns[i]===t)el.classList.add('on');});
-  ns.forEach(function(n){var p=document.getElementById('panel-'+n);if(p)p.classList.remove('on');});
-  var pnl=document.getElementById('panel-'+t);if(pnl)pnl.classList.add('on');
-  if(t==='today')renderToday();
-  if(t==='dashboard')renderDash();
-  if(t==='delivery'){renderDeliveryMark();renderRateList();}
-  if(t==='customer'&&document.getElementById('sub-clist').classList.contains('on'))renderCList();
-  if(t==='employee'){renderEList();renderRepSel();}
-}
-function switchSub(s){
-  var ns=['register','clist','csearch'];
-  document.querySelectorAll('#panel-customer .st').forEach(function(el,i){el.classList.remove('on');if(ns[i]===s)el.classList.add('on');});
-  ns.forEach(function(n){var p=document.getElementById('sub-'+n);if(p)p.classList.remove('on');});
-  var pnl=document.getElementById('sub-'+s);if(pnl)pnl.classList.add('on');
-  if(s==='clist')renderCList();
-}
-function switchDel(s){
-  var ns=['dmark','dhistory','dpayment','drate','dsummary'];
-  document.querySelectorAll('#panel-delivery .st.del').forEach(function(el,i){el.classList.remove('on');if(ns[i]===s)el.classList.add('on');});
-  ns.forEach(function(n){var p=document.getElementById('dsub-'+n);if(p)p.classList.remove('on');});
-  var pnl=document.getElementById('dsub-'+s);if(pnl)pnl.classList.add('on');
-  if(s==='drate')renderRateList();
-  if(s==='dsummary')renderSummary();
-}
-function switchEmp(s){
-  var ns=['ereg','elist','esearch','ereport'];
-  document.querySelectorAll('#panel-employee .st.emp').forEach(function(el,i){el.classList.remove('on');if(ns[i]===s)el.classList.add('on');});
-  ns.forEach(function(n){var p=document.getElementById('esub-'+n);if(p)p.classList.remove('on');});
-  var pnl=document.getElementById('esub-'+s);if(pnl)pnl.classList.add('on');
-  if(s==='elist')renderEList();
-  if(s==='ereport')renderRepSel();
+function loadAllData() {
+  document.getElementById('loading-overlay').style.display = 'flex';
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", FIREBASE_URL + ".json", true);
+  xhr.onreadystatechange = function() {
+    if(xhr.readyState === 4) {
+      document.getElementById('loading-overlay').style.display = 'none';
+      if(xhr.status === 200) {
+        var res = JSON.parse(xhr.responseText) || {};
+        DB = res.customers ? Object.values(res.customers) : [];
+        PRODUCTS = res.products ? Object.values(res.products) : PRODUCTS;
+        EMPLOYEES = res.employees ? Object.values(res.employees) : [];
+        DEL_RATES = res.del_rates || {};
+        DEL_LOGS = res.del_logs || {};
+        PAY_LOGS = res.pay_logs || {};
+        
+        initApp();
+      } else {
+        alert("Firebase URL galat hai ya Database rules Lock hain! Kripya rules public karein.");
+      }
+    }
+  };
+  xhr.send();
 }
 
-// ===== PRODUCTS =====
-function buildProdGrid(){var g=document.getElementById('prod-grid');if(!g)return;g.innerHTML=PRODS.map(function(p){return'<div class="pi" id="pi-'+p.id+'"><label><input type="checkbox" id="ck-'+p.id+'" onchange="togP(\''+p.id+'\')"> '+p.icon+' '+p.name+'</label><div class="row"><input type="number" id="qy-'+p.id+'" value="'+p.defQty+'" min="0.1" step="0.1"><span class="unit">'+p.unit+'</span></div><div class="row"><input type="number" id="pr-'+p.id+'" placeholder="₹/'+p.unit+'" oninput="calcTotal()"><span class="unit">Rate</span></div></div>';}).join('');}
-function renderProdManage(){var el=document.getElementById('prod-list-manage');if(!el)return;el.innerHTML=PRODS.map(function(p,i){return'<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #F2E8DF"><span>'+p.icon+' <b>'+p.name+'</b> ('+p.unit+')</span><button class="ib" onclick="delProd('+i+')">🗑️</button></div>';}).join('');}
-function addProduct(){var n=document.getElementById('np-name').value.trim();var ic=document.getElementById('np-icon').value.trim()||'📦';var u=document.getElementById('np-unit').value;var q=parseFloat(document.getElementById('np-qty').value)||1;if(!n){toast('Product naam zaroori hai!');return;}PRODS.push({id:'p'+Date.now(),name:n,icon:ic,unit:u,defQty:q});saveAll();buildProdGrid();renderProdManage();document.getElementById('np-name').value='';document.getElementById('np-icon').value='';toast(n+' add ho gaya!');}
-function delProd(i){if(!confirm('Delete "'+PRODS[i].name+'"?'))return;PRODS.splice(i,1);saveAll();buildProdGrid();renderProdManage();}
-
-// ===== REGISTER CUSTOMER =====
-function registerCustomer(){var n=document.getElementById('rn').value.trim();var m=document.getElementById('rm').value.trim();var a=document.getElementById('ra').value.trim();var ref_id=document.getElementById('r-ref').value.trim();if(!n||!m){toast('Naam aur mobile zaroori hai!');return;}if(!/^\d{10}$/.test(m)){toast('Mobile 10 digit hona chahiye!');return;}if(DB.find(function(c){return c.mobile===m;})){toast('Mobile already registered hai!');return;}if(ref_id&&!EDB.find(function(e){return e.aadhar===ref_id;})){toast('Employee ID exist nahi karta!');return;}var emp=ref_id?EDB.find(function(e){return e.aadhar===ref_id;}):null;DB.push({id:m,mobile:m,name:n,address:a,ref:ref_id||'',reg:today(),orders:[]});if(emp){if(!emp.referrals)emp.referrals=[];emp.referrals.push(m);}saveAll();clearReg();toast(n+' registered!');}
-function clearReg(){['rn','rm','ra','r-ref'].forEach(function(id){document.getElementById(id).value='';}); }
-
-// ===== ORDER =====
-function lookupC(){var m=document.getElementById('om').value.trim();var c=DB.find(function(x){return x.mobile===m;});document.getElementById('on').value=c?c.name:(m.length===10?'Not found':'');}
-function togP(pid){var el=document.getElementById('pi-'+pid);if(el)el.classList.toggle('sel',document.getElementById('ck-'+pid).checked);calcTotal();}
-function calcTotal(){var t=0;PRODS.forEach(function(p){var ck=document.getElementById('ck-'+p.id);if(ck&&ck.checked)t+=(parseFloat(document.getElementById('qy-'+p.id).value)||0)*(parseFloat(document.getElementById('pr-'+p.id).value)||0);});document.getElementById('o-total').textContent='₹'+t.toFixed(0);}
-function buildItems(){var items=[];PRODS.forEach(function(p){var ck=document.getElementById('ck-'+p.id);if(ck&&ck.checked){var qty=parseFloat(document.getElementById('qy-'+p.id).value)||0;var price=parseFloat(document.getElementById('pr-'+p.id).value)||0;items.push({product:p.name,icon:p.icon,qty:qty,unit:p.unit,price:price,amount:qty*price});}});return items;}
-function addOrder(){var mob=document.getElementById('om').value.trim();var dt=document.getElementById('od').value;var exp=document.getElementById('oexp').value;var note=document.getElementById('ono').value.trim();var c=DB.find(function(x){return x.mobile===mob;});if(!c){toast('Customer nahi mila!');return;}if(!dt){toast('Date select karein!');return;}var items=buildItems();if(!items.length){toast('Koi product select nahi!');return;}var total=items.reduce(function(s,i){return s+i.amount;},0);var order={id:Date.now(),date:dt,nextExpected:exp||'',items:items,total:total,note:note};if(!c.orders)c.orders=[];c.orders.push(order);if(c.ref){var emp=EDB.find(function(e){return e.aadhar===c.ref;});if(emp)setTimeout(function(){window.open('https://wa.me/91'+emp.mobile+'?text='+encodeURIComponent(buildEmpNotif(c,order)),'_blank');},600);}saveAll();toast('Order saved! Total: ₹'+total.toFixed(0));resetOForm();}
-function resetOForm(){PRODS.forEach(function(p){var ck=document.getElementById('ck-'+p.id);if(ck){ck.checked=false;var el=document.getElementById('pi-'+p.id);if(el)el.classList.remove('sel');}});['om','on','ono','oexp'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('od').value=today();document.getElementById('o-total').textContent='₹0';}
-
-// ===== BILLS =====
-function buildBill(c,order){var lines=order.items.map(function(i){return'  '+i.icon+' '+i.product+': '+i.qty+i.unit+' x ₹'+i.price+' = ₹'+i.amount.toFixed(0);}).join('\n');return'🫙 *Shree Kamal Ghee & Dairy* 🫙\n_✨ Promise of Purity and Taste._\n━━━━━━━━━━━━━━━━\n*BILL / RECEIPT*\n\nNamaskar *'+c.name+'* ji 🙏\nDate: '+fmtDate(order.date)+'\nID: '+c.id+'\n\n*Order:*\n'+lines+'\n━━━━━━━━━━━━━━━━\n*Total: ₹'+order.total.toFixed(0)+'*\n━━━━━━━━━━━━━━━━\n'+(order.nextExpected?'📅 Next: '+fmtDate(order.nextExpected)+'\n':'')+'\nDhanyawad! 🙏';}
-function buildEmpNotif(c,order){return'👔 *Order Alert*\nCustomer: *'+c.name+'*\nMobile: '+c.mobile+'\nOrder: '+order.items.map(function(i){return i.icon+' '+i.product+' '+i.qty+i.unit;}).join(', ')+'\nTotal: ₹'+order.total.toFixed(0)+'\nShree Kamal Ghee & Dairy';}
-function sendWABill(){var mob=document.getElementById('om').value.trim();var c=DB.find(function(x){return x.mobile===mob;});if(!c){toast('Customer nahi mila!');return;}var items=buildItems();if(!items.length){toast('Koi product select nahi!');return;}var total=items.reduce(function(s,i){return s+i.amount;},0);var fo={id:'p',date:document.getElementById('od').value||today(),nextExpected:document.getElementById('oexp').value,items:items,total:total,note:''};window.open('https://wa.me/91'+mob+'?text='+encodeURIComponent(buildBill(c,fo)),'_blank');}
-function sendWABillD(mob,oid){var c=DB.find(function(x){return x.mobile===mob;});if(!c)return;var order=c.orders?c.orders.find(function(o){return o.id===oid;})||(c.orders.length?c.orders[c.orders.length-1]:null):null;if(!order)return;window.open('https://wa.me/91'+mob+'?text='+encodeURIComponent(buildBill(c,order)),'_blank');}
-function sendWAMsg(mob){var c=DB.find(function(x){return x.mobile===mob;});if(!c)return;window.open('https://wa.me/91'+mob+'?text='+encodeURIComponent('Namaskar '+c.name+' ji 🙏\nShree Kamal Ghee & Dairy mein swagat!\n✨ Promise of Purity and Taste.'),'_blank');}
-
-// ===== TODAY =====
-// ===== TODAY ORDERS =====
-function renderToday(){
-  var td=today();
-  // Expected deliveries
-  var list=DB.filter(function(c){var lo=c.orders&&c.orders.length?c.orders[c.orders.length-1]:null;return lo&&lo.nextExpected===td;});
-  var el=document.getElementById('today-list');
-  if(!list.length){el.innerHTML='<div style="text-align:center;padding:30px;color:#ccc"><div style="font-size:2.5rem">📅</div><p>Aaj koi expected delivery nahi</p></div>';}
-  else{el.innerHTML=list.map(function(c){var lo=c.orders[c.orders.length-1];var items=lo?lo.items.map(function(i){return i.icon+' '+i.product+' '+i.qty+i.unit;}).join(', '):'—';return'<div class="today-card"><div><div style="font-weight:800;font-size:0.92rem">'+c.name+'</div><div style="font-size:0.75rem;color:#999;margin-top:2px">'+c.mobile+' | '+items+'</div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bwa" style="padding:6px 12px;font-size:0.75rem" onclick="sendWAMsg(\''+c.mobile+'\')">📱 WA</button><button class="btn bp" style="padding:6px 12px;font-size:0.75rem" onclick="openNM(\''+c.mobile+'\')">📅 Next</button><button class="btn" style="padding:6px 12px;font-size:0.75rem;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff" onclick="quickOrder(\''+c.mobile+'\')">➕ Order</button></div></div>';}).join('');}
-
-  // Aaj ke orders
-  var todayOrders=[];
-  DB.forEach(function(c){if(c.orders)c.orders.forEach(function(o){if(o.date===td)todayOrders.push({cname:c.name,cmob:c.mobile,time:o.time||'--:--',items:o.items,total:o.total,note:o.note,id:o.id});});});
-  todayOrders.sort(function(a,b){return a.time>b.time?-1:1;});
-  var todayEl=document.getElementById('today-orders-list');
-  if(!todayEl)return;
-  if(!todayOrders.length){todayEl.innerHTML='<div style="text-align:center;padding:20px;color:#ccc">Aaj koi order nahi hua abhi</div>';return;}
-  todayEl.innerHTML=todayOrders.map(function(o){return'<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px 0;border-bottom:1px solid #F2E8DF;flex-wrap:wrap;gap:6px">'+
-    '<div>'+
-      '<div style="display:flex;align-items:center;gap:8px">'+
-        '<span style="background:#1e40af;color:#fff;border-radius:6px;padding:2px 8px;font-size:0.72rem;font-weight:700">⏰ '+o.time+'</span>'+
-        '<span style="font-weight:800;font-size:0.88rem">'+o.cname+'</span>'+
-      '</div>'+
-      '<div style="font-size:0.75rem;color:#999;margin-top:3px">'+o.items.map(function(i){return i.icon+' '+i.product+' '+i.qty+i.unit;}).join(', ')+(o.note?' | '+o.note:'')+'</div>'+
-    '</div>'+
-    '<div style="font-family:monospace;font-weight:900;color:var(--amber)">Rs.'+o.total.toFixed(0)+'</div>'+
-  '</div>';}).join('');
-}
-function openNM(mob){curNextMob=mob;var c=DB.find(function(x){return x.mobile===mob;});document.getElementById('nm-cname').textContent='Customer: '+c.name+' ('+mob+')';document.getElementById('nm-date').value='';document.getElementById('next-modal').classList.add('on');}
-function saveNextDate(){var dt=document.getElementById('nm-date').value;if(!dt){toast('Date select karein!');return;}var c=DB.find(function(x){return x.mobile===curNextMob;});if(!c||!c.orders||!c.orders.length){toast('Pehle order add karein!');closeM('next-modal');return;}c.orders[c.orders.length-1].nextExpected=dt;saveAll();closeM('next-modal');toast('Next date set: '+fmtDate(dt));renderToday();}
-
-// ===== CUSTOMER LIST =====
-function renderCList(){var s=(document.getElementById('f-s').value||'').toLowerCase();var zf=document.getElementById('f-z').value;var list=DB.filter(function(c){var z=zone(c);return(!s||(c.name.toLowerCase().includes(s)||c.mobile.includes(s)))&&(!zf||z===zf);});var tb=document.getElementById('c-tbody'),em=document.getElementById('c-empty');if(!list.length){tb.innerHTML='';em.style.display='block';return;}em.style.display='none';tb.innerHTML=list.map(function(c){var lo=c.orders&&c.orders.length?c.orders[c.orders.length-1]:null;var nxt=lo&&lo.nextExpected?fmtDate(lo.nextExpected):'—';var z=zone(c);return'<tr><td><span class="cid">'+c.id+'</span></td><td><b>'+c.name+'</b></td><td>'+c.mobile+'</td><td>'+(c.address||'—')+'</td><td>'+fmtDate(lo?lo.date:null)+'</td><td>'+nxt+'</td><td><span class="zp '+z+'"><span class="dot"></span>'+z.charAt(0).toUpperCase()+z.slice(1)+'</span></td><td><div style="display:flex;gap:4px"><button class="ib" onclick="openView(\''+c.mobile+'\')">👁️</button><button class="ib" onclick="sendWAMsg(\''+c.mobile+'\')">📱</button><button class="ib" onclick="quickOrder(\''+c.mobile+'\')">➕</button><button class="ib" onclick="openNM(\''+c.mobile+'\')">📅</button></div></td></tr>';}).join('');}
-
-// ===== SEARCH =====
-function doCSrch(){var mob=document.getElementById('cs-in').value.trim();var c=DB.find(function(x){return x.mobile===mob;});var el=document.getElementById('cs-result');if(!mob){el.innerHTML='';return;}if(!c){el.innerHTML='<div class="card" style="text-align:center;padding:28px"><div style="font-size:2rem">😕</div><div style="font-weight:700;margin-top:8px">Customer nahi mila</div><button class="btn bp" style="margin-top:12px" onclick="switchSub(\'register\')">➕ Register</button></div>';return;}var z=zone(c);var ts=c.orders?c.orders.reduce(function(s,o){return s+(o.total||0);},0):0;var lo=c.orders&&c.orders.length?c.orders[c.orders.length-1]:null;var rate=RATES[mob]||0;var totalDlvr=(DLVR[mob]||[]).reduce(function(s,d){return s+d.qty;},0);var pending=calcPending(mob);var empInfo='';if(c.ref){var emp=EDB.find(function(e){return e.aadhar===c.ref;});if(emp)empInfo='<div class="ii"><div class="ik">Referred By</div><div class="iv" style="color:#7c3aed">👔 '+emp.name+'</div></div>';}var ordH=c.orders&&c.orders.length?'<div class="tl">'+c.orders.slice().reverse().map(function(o){return'<div class="tli"><div class="tlc"><div class="tld">'+fmtDate(o.date)+(o.note?' | '+o.note:'')+(o.nextExpected?' | Next: '+fmtDate(o.nextExpected):'')+'</div><div class="tli2">'+o.items.map(function(i){return i.icon+' '+i.product+' '+i.qty+i.unit;}).join(', ')+'</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px"><div class="tlt">₹'+(o.total||0).toFixed(0)+'</div><button class="btn bwa" style="padding:4px 10px;font-size:0.72rem" onclick="sendWABillD(\''+c.mobile+'\','+o.id+')">📱 Bill</button></div></div></div>';}).join('')+'</div>':'<div style="color:#ccc;text-align:center;padding:20px">Koi order nahi</div>';el.innerHTML='<div class="card" style="overflow:hidden;padding:0"><div class="ph"><div class="pa">'+ini(c.name)+'</div><div><h3>'+c.name+'</h3><p>'+c.mobile+' | ID: '+c.id+'</p><div style="margin-top:5px"><span class="zp '+z+'"><span class="dot"></span>'+zoneLbl(z)+'</span></div></div></div><div style="padding:16px"><div class="ig"><div class="ii"><div class="ik">Registered</div><div class="iv">'+fmtDate(c.reg)+'</div></div><div class="ii"><div class="ik">Location</div><div class="iv">'+(c.address||'—')+'</div></div><div class="ii"><div class="ik">Milk Rate</div><div class="iv" style="color:var(--b)">₹'+rate+'/L</div></div><div class="ii"><div class="ik">Total Delivery</div><div class="iv" style="color:var(--b)">'+totalDlvr.toFixed(1)+'L</div></div><div class="ii"><div class="ik">Orders</div><div class="iv">'+(c.orders?c.orders.length:0)+'</div></div><div class="ii"><div class="ik">Pending</div><div class="iv" style="color:var(--r)">₹'+pending.toFixed(0)+'</div></div>'+empInfo+'</div><div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px"><button class="btn bwa" onclick="sendWAMsg(\''+c.mobile+'\')">📱 WA</button><button class="btn bp" onclick="quickOrder(\''+c.mobile+'\')">➕ Order</button><button class="btn bp" onclick="openNM(\''+c.mobile+'\')">📅 Next</button><button class="btn bxl" onclick="exportSByMob(\''+c.mobile+'\')">📊 Excel</button></div><div style="font-weight:800;font-size:0.9rem;margin-bottom:12px">📦 Order History</div>'+ordH+'</div></div>';}
-
-// ===== VIEW MODAL =====
-function openView(mob){var c=DB.find(function(x){return x.mobile===mob;});if(!c)return;curMob=mob;var z=zone(c);var ts=c.orders?c.orders.reduce(function(s,o){return s+(o.total||0);},0):0;document.getElementById('vm-name').textContent=c.name;var ordH=c.orders&&c.orders.length?c.orders.slice().reverse().map(function(o){return'<div class="tlc" style="margin-bottom:8px"><div class="tld">'+fmtDate(o.date)+(o.note?' | '+o.note:'')+(o.nextExpected?' | Next: '+fmtDate(o.nextExpected):'')+'</div><div class="tli2">'+o.items.map(function(i){return i.icon+' '+i.product+' '+i.qty+i.unit;}).join(', ')+'</div><div style="display:flex;justify-content:space-between;margin-top:4px"><div class="tlt">₹'+(o.total||0).toFixed(0)+'</div><button class="btn bwa" style="padding:4px 10px;font-size:0.72rem" onclick="sendWABillD(\''+c.mobile+'\','+o.id+')">📱 Bill</button></div></div>';}).join(''):'<div style="color:#ccc;text-align:center;padding:16px">Koi order nahi</div>';document.getElementById('vm-body').innerHTML='<div class="ig" style="margin-bottom:12px"><div class="ii"><div class="ik">ID</div><div class="iv">'+c.id+'</div></div><div class="ii"><div class="ik">Mobile</div><div class="iv">'+c.mobile+'</div></div><div class="ii"><div class="ik">Location</div><div class="iv">'+(c.address||'—')+'</div></div><div class="ii"><div class="ik">Milk Rate</div><div class="iv" style="color:var(--b)">₹'+(RATES[mob]||0)+'/L</div></div><div class="ii"><div class="ik">Pending</div><div class="iv" style="color:var(--r)">₹'+calcPending(mob).toFixed(0)+'</div></div><div class="ii"><div class="ik">Zone</div><div class="iv"><span class="zp '+z+'"><span class="dot"></span>'+zoneLbl(z)+'</span></div></div></div><div style="font-weight:800;margin-bottom:10px">📦 Orders</div>'+ordH;document.getElementById('vm-wa').onclick=function(){sendWAMsg(mob);};document.getElementById('vm-del').onclick=function(){if(confirm(c.name+' delete karein?')){DB=DB.filter(function(x){return x.mobile!==mob;});saveAll();closeM('view-modal');renderCList();toast('Deleted!');}};document.getElementById('view-modal').classList.add('on');}
-function quickOrder(mob){document.getElementById('om').value=mob;document.getElementById('od').value=today();document.getElementById('oexp').value='';lookupC();switchMain('order');}
-function filterZone(z){activeZF=activeZF===z?'':z;document.querySelectorAll('.zb').forEach(function(el){el.classList.remove('on');});if(activeZF){var map={green:0,blue:1,yellow:2,red:3};var el=document.querySelectorAll('.zb')[map[activeZF]];if(el)el.classList.add('on');}switchMain('customer');switchSub('clist');document.getElementById('f-z').value=activeZF;renderCList();}
-
-// ===== BROADCAST =====
-function openBcast(){updateBCList();document.getElementById('bcast-modal').classList.add('on');}
-function updateBCList(){var z=document.getElementById('bc-zone').value;var list=DB.filter(function(c){return z==='all'||zone(c)===z;});document.getElementById('bc-list').innerHTML=list.length?list.map(function(c){return'<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #F2E8DF"><b>'+c.name+'</b><span style="color:#999">'+c.mobile+'</span></div>';}).join(''):'<div style="color:#ccc">Koi customer nahi</div>';}
-function broadcastWA(){var z=document.getElementById('bc-zone').value;var tmpl=document.getElementById('bc-msg').value;var list=DB.filter(function(c){return z==='all'||zone(c)===z;});if(!list.length){toast('Koi customer nahi!');return;}list.forEach(function(c,i){setTimeout(function(){window.open('https://wa.me/91'+c.mobile+'?text='+encodeURIComponent(tmpl.replace(/{NAME}/g,c.name)),'_blank');},i*700);});closeM('bcast-modal');toast(list.length+' customers ko WA open ho raha hai...');}
-
-// ===== EMPLOYEE =====
-function registerEmployee(){var n=document.getElementById('en').value.trim();var a=document.getElementById('ea').value.trim();var m=document.getElementById('em').value.trim();var addr=document.getElementById('eaddr').value.trim();var role=document.getElementById('erole').value.trim();var join=document.getElementById('ejoin').value;if(!n||!a||!m){toast('Naam, Aadhar aur Mobile zaroori hai!');return;}if(!/^\d{12}$/.test(a)){toast('Aadhar 12 digit hona chahiye!');return;}if(!/^\d{10}$/.test(m)){toast('Mobile 10 digit hona chahiye!');return;}if(EDB.find(function(e){return e.aadhar===a;})){toast('Ye Aadhar already registered hai!');return;}EDB.push({id:a,aadhar:a,name:n,mobile:m,address:addr,role:role,join:join||today(),referrals:[]});saveAll();clearEmp();renderEList();toast(n+' registered!');}
-function clearEmp(){['en','ea','em','eaddr','erole'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('ejoin').value=today();}
-function renderEList(){var tb=document.getElementById('e-tbody'),em=document.getElementById('e-empty');if(!tb)return;if(!EDB.length){tb.innerHTML='';em.style.display='block';return;}em.style.display='none';tb.innerHTML=EDB.map(function(e){return'<tr><td><span class="eid">'+e.aadhar+'</span></td><td><b>'+e.name+'</b></td><td>'+e.mobile+'</td><td>'+(e.role||'—')+'</td><td>'+fmtDate(e.join)+'</td><td style="text-align:center;font-weight:700">'+((e.referrals||[]).length)+'</td><td><div style="display:flex;gap:4px"><button class="ib" onclick="srchEmpById(\''+e.aadhar+'\')">👁️</button><button class="ib" onclick="waEmp(\''+e.aadhar+'\')">📱</button></div></td></tr>';}).join('');}
-function doESrch(){srchEmpById(document.getElementById('es-in').value.trim());}
-function srchEmpById(aid){document.getElementById('es-in').value=aid;var e=EDB.find(function(x){return x.aadhar===aid;});var el=document.getElementById('es-result');if(!aid){el.innerHTML='';return;}if(!e){el.innerHTML='<div class="card" style="text-align:center;padding:28px"><div style="font-size:2rem">😕</div><div style="font-weight:700;margin-top:8px">Employee nahi mila</div></div>';return;}var refs=e.referrals||[];var cList=refs.map(function(mob){return DB.find(function(c){return c.mobile===mob;});}).filter(Boolean);var tr=cList.reduce(function(s,c){return s+(c.orders?c.orders.reduce(function(s2,o){return s2+(o.total||0);},0):0);},0);var rows=cList.length?cList.map(function(c){var lo=c.orders&&c.orders.length?c.orders[c.orders.length-1]:null;var cs=c.orders?c.orders.reduce(function(s,o){return s+(o.total||0);},0):0;var z=zone(c);return'<tr><td><span class="cid">'+c.id+'</span></td><td><b>'+c.name+'</b></td><td>'+c.mobile+'</td><td>'+fmtDate(c.reg)+'</td><td>'+fmtDate(lo?lo.date:null)+'</td><td>'+(c.orders?c.orders.length:0)+'</td><td style="color:var(--amber);font-weight:700">₹'+cs.toFixed(0)+'</td><td><span class="zp '+z+'"><span class="dot"></span>'+z.charAt(0).toUpperCase()+z.slice(1)+'</span></td><td><button class="ib" onclick="openView(\''+c.mobile+'\')">👁️</button></td></tr>';}).join(''):'<tr><td colspan="9" style="text-align:center;padding:20px;color:#ccc">Koi referred customer nahi</td></tr>';el.innerHTML='<div class="card" style="padding:0;overflow:hidden"><div style="background:linear-gradient(135deg,#2e1065,#5b21b6);padding:18px;display:flex;align-items:center;gap:14px"><div style="width:50px;height:50px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:900;color:#fff">'+ini(e.name)+'</div><div><h3 style="color:#fff;font-size:1.1rem;font-weight:800">'+e.name+'</h3><p style="color:rgba(255,255,255,.6);font-size:0.78rem">ID: '+e.aadhar+' | '+e.mobile+'</p></div></div><div style="padding:16px"><div class="ig"><div class="ii"><div class="ik">Role</div><div class="iv">'+(e.role||'—')+'</div></div><div class="ii"><div class="ik">Join Date</div><div class="iv">'+fmtDate(e.join)+'</div></div><div class="ii"><div class="ik">Referrals</div><div class="iv" style="color:#7c3aed">'+refs.length+'</div></div><div class="ii"><div class="ik">Revenue</div><div class="iv" style="color:var(--g)">₹'+tr.toFixed(0)+'</div></div></div><div style="font-weight:800;font-size:0.9rem;color:#5b21b6;margin-bottom:10px">👥 Referred Customers</div><div class="tw"><table><thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Registered</th><th>Last Order</th><th>Orders</th><th>Revenue</th><th>Zone</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div></div>';}
-function waEmp(aid){var e=EDB.find(function(x){return x.aadhar===aid;});if(!e)return;window.open('https://wa.me/91'+e.mobile+'?text='+encodeURIComponent('Namaskar '+e.name+' ji 🙏\nShree Kamal Ghee & Dairy.\n✨ Promise of Purity and Taste.'),'_blank');}
-function renderRepSel(){var sel=document.getElementById('rep-emp');if(!sel)return;var cur=sel.value;sel.innerHTML='<option value="">-- Select --</option>'+EDB.map(function(e){return'<option value="'+e.aadhar+'"'+(e.aadhar===cur?' selected':'')+'>'+e.name+'</option>';}).join('');if(cur)renderReport();}
-function setRepPeriod(p,btn){repPeriod=p;document.querySelectorAll('.rf').forEach(function(el){el.classList.remove('on');});btn.classList.add('on');renderReport();}
-function renderReport(){var aid=document.getElementById('rep-emp').value;var el=document.getElementById('rep-body');if(!el)return;if(!aid){el.innerHTML='<div style="color:#ccc;text-align:center;padding:30px">Employee select karein</div>';return;}var e=EDB.find(function(x){return x.aadhar===aid;});if(!e){el.innerHTML='';return;}var refs=e.referrals||[];var cList=refs.map(function(mob){return DB.find(function(c){return c.mobile===mob;});}).filter(Boolean);var pd=getPD(repPeriod);var fD=new Date(pd.f),tD=new Date(pd.t);var pOrds=[],pRev=0,aC=new Set();cList.forEach(function(c){if(c.orders)c.orders.forEach(function(o){var od=new Date(o.date);if(od>=fD&&od<=tD){pOrds.push({date:o.date,items:o.items,total:o.total,cname:c.name});pRev+=(o.total||0);aC.add(c.mobile);}});});var pLbl={week:'This Week',month:'This Month',year:'This Year',all:'All Time'}[repPeriod];el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px"><div class="rep-stat"><div class="rv">'+refs.length+'</div><div class="rl">Referrals</div></div><div class="rep-stat"><div class="rv">'+aC.size+'</div><div class="rl">Active</div></div><div class="rep-stat"><div class="rv">'+pOrds.length+'</div><div class="rl">Orders</div></div><div class="rep-stat"><div class="rv" style="font-size:1.1rem">₹'+pRev.toFixed(0)+'</div><div class="rl">Revenue ('+pLbl+')</div></div></div>'+(pOrds.length?'<div class="tw"><table><thead><tr><th>Date</th><th>Customer</th><th>Items</th><th>Total</th></tr></thead><tbody>'+pOrds.sort(function(a,b){return new Date(b.date)-new Date(a.date);}).map(function(o){return'<tr><td>'+fmtDate(o.date)+'</td><td>'+o.cname+'</td><td>'+o.items.map(function(i){return i.icon+' '+i.product+' '+i.qty+i.unit;}).join(', ')+'</td><td style="font-weight:700;color:var(--amber)">₹'+(o.total||0).toFixed(0)+'</td></tr>';}).join('')+'</tbody></table></div>':'<div style="color:#ccc;text-align:center;padding:20px">Is period mein koi order nahi</div>');}
-
-// ===== DELIVERY =====
-function calcPending(mob){var rate=RATES[mob]||0;var totalAmt=(DLVR[mob]||[]).reduce(function(s,d){return s+d.qty*rate;},0);var totalPaid=(PAYMENTS[mob]||[]).reduce(function(s,p){return s+p.amt;},0);return Math.max(0,totalAmt-totalPaid);}
-
-function renderDeliveryMark(){
-  var el=document.getElementById('delivery-list');if(!el)return;
-  var dt=document.getElementById('del-date').value||today();
-  document.getElementById('del-today-lbl').textContent='Date: '+fmtDate(dt);
-  var dCusts=DB.filter(function(c){return RATES[c.mobile];});
-  if(!dCusts.length){el.innerHTML='<div style="text-align:center;padding:30px;color:#ccc">Pehle ⚙️ Rate Set tab mein customers ki rate set karein</div>';return;}
-  el.innerHTML=dCusts.map(function(c){
-    var existing=DLVR[c.mobile]?DLVR[c.mobile].find(function(d){return d.date===dt;}):null;
-    var rate=RATES[c.mobile]||0;
-    var pending=calcPending(c.mobile);
-    return'<div class="del-row">'+
-      '<div><div style="font-weight:800;font-size:0.9rem">'+c.name+'</div>'+
-      '<div style="font-size:0.72rem;color:#999;margin-top:2px">'+c.mobile+' | ₹'+rate+'/L'+(pending>0?' | <b style="color:var(--r)">Pending: ₹'+pending.toFixed(0)+'</b>':'')+'</div></div>'+
-      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
-        '<input type="number" id="dq-'+c.mobile+'" value="'+(existing?existing.qty:1)+'" min="0" step="0.5" style="width:72px;border:2px solid #EDE0D4;border-radius:8px;padding:6px 8px;font-size:0.88rem;text-align:center;outline:none">'+
-        '<span style="font-size:0.72rem;color:#999">L</span>'+
-        '<label style="display:flex;align-items:center;gap:4px;font-size:0.8rem;cursor:pointer;white-space:nowrap">'+
-          '<input type="checkbox" id="dd-'+c.mobile+'" '+(existing&&existing.delivered?'checked':'')+'>✅ Delivered</label>'+
-      '</div>'+
-    '</div>';
-  }).join('');
-}
-
-function saveDeliveries(){
-  var dt=document.getElementById('del-date').value||today();
-  var dCusts=DB.filter(function(c){return RATES[c.mobile];});
-  dCusts.forEach(function(c){
-    var qEl=document.getElementById('dq-'+c.mobile);
-    var dEl=document.getElementById('dd-'+c.mobile);
-    if(!qEl)return;
-    var qty=parseFloat(qEl.value)||0;
-    var delivered=dEl?dEl.checked:false;
-    if(!DLVR[c.mobile])DLVR[c.mobile]=[];
-    var idx=DLVR[c.mobile].findIndex(function(d){return d.date===dt;});
-    if(idx>=0)DLVR[c.mobile][idx]={date:dt,qty:qty,delivered:delivered};
-    else DLVR[c.mobile].push({date:dt,qty:qty,delivered:delivered});
-  });
-  saveDLVR();updateStats();
-  toast('✅ '+fmtDate(dt)+' ki delivery save ho gayi!');
-}
-
-function sendAllDeliveryWA(){
-  var dt=document.getElementById('del-date').value||today();
-  var empGroups={};
-  DB.filter(function(c){return c.ref&&RATES[c.mobile];}).forEach(function(c){
-    var emp=EDB.find(function(e){return e.aadhar===c.ref;});if(!emp)return;
-    if(!empGroups[emp.aadhar])empGroups[emp.aadhar]={emp:emp,customers:[]};
-    var d=(DLVR[c.mobile]||[]).find(function(x){return x.date===dt;});
-    empGroups[emp.aadhar].customers.push({name:c.name,qty:d?d.qty:0,rate:RATES[c.mobile]||0});
-  });
-  var grps=Object.values(empGroups);
-  if(!grps.length){toast('Koi referral customer nahi!');return;}
-  grps.forEach(function(grp,i){
-    var lines=grp.customers.map(function(c){return'  👤 '+c.name+': '+c.qty+'L × ₹'+c.rate+' = ₹'+(c.qty*c.rate).toFixed(0);}).join('\n');
-    var total=grp.customers.reduce(function(s,c){return s+c.qty*c.rate;},0);
-    var msg='🥛 *Daily Delivery Report*\n📅 '+fmtDate(dt)+'\n━━━━━━━━━━━━━━\n'+lines+'\n━━━━━━━━━━━━━━\n*Total: ₹'+total.toFixed(0)+'*\n\nShree Kamal Ghee & Dairy\n✨ Promise of Purity and Taste.';
-    setTimeout(function(){window.open('https://wa.me/91'+grp.emp.mobile+'?text='+encodeURIComponent(msg),'_blank');},i*700);
-  });
-  toast('📱 '+grps.length+' employees ko WA bheja ja raha hai!');
-}
-
-function renderDelHistory(){
-  var mob=document.getElementById('dh-mob').value.trim();
-  var month=document.getElementById('dh-month').value;
-  var el=document.getElementById('del-history-result');
-  var c=DB.find(function(x){return x.mobile===mob;});
-  if(!c){el.innerHTML='<div style="color:#ccc;text-align:center;padding:20px">Customer nahi mila</div>';return;}
-  var dlvrs=(DLVR[mob]||[]).filter(function(d){return!month||d.date.startsWith(month);});
-  dlvrs.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
-  var rate=RATES[mob]||0;
-  var totalQty=dlvrs.reduce(function(s,d){return s+d.qty;},0);
-  var totalAmt=totalQty*rate;
-  var pending=calcPending(mob);
-  if(!dlvrs.length){el.innerHTML='<div style="color:#ccc;text-align:center;padding:20px">Is month koi delivery nahi</div>';return;}
-  el.innerHTML=
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'+
-      '<div class="dstat"><div class="dv" style="color:var(--b)">'+totalQty.toFixed(1)+'L</div><div class="dl">Total Qty</div></div>'+
-      '<div class="dstat"><div class="dv" style="color:var(--amber)">₹'+totalAmt.toFixed(0)+'</div><div class="dl">Total Due</div></div>'+
-      '<div class="dstat"><div class="dv" style="color:var(--r)">₹'+pending.toFixed(0)+'</div><div class="dl">Pending</div></div>'+
-    '</div>'+
-    '<div style="display:flex;justify-content:flex-end;margin-bottom:10px">'+
-      '<button class="btn bwa" style="padding:7px 14px;font-size:0.78rem" onclick="sendHistoryWA(\''+mob+'\')">📱 Referral ko WA</button>'+
-    '</div>'+
-    '<div class="tw"><table><thead><tr><th>Date</th><th>Qty (L)</th><th>Amount (₹)</th><th>Status</th></tr></thead><tbody>'+
-    dlvrs.map(function(d){return'<tr><td>'+fmtDate(d.date)+'</td><td style="font-weight:700">'+d.qty+'L</td><td style="color:var(--amber);font-weight:700">₹'+(d.qty*rate).toFixed(0)+'</td><td>'+(d.delivered?'<span style="color:var(--g);font-weight:700">✅ Done</span>':'<span style="color:var(--r)">⏳ Pending</span>')+'</td></tr>';}).join('')+
-    '</tbody></table></div>';
-}
-
-function sendHistoryWA(mob){
-  var c=DB.find(function(x){return x.mobile===mob;});if(!c||!c.ref){toast('Referral employee nahi hai!');return;}
-  var emp=EDB.find(function(e){return e.aadhar===c.ref;});if(!emp){toast('Employee nahi mila!');return;}
-  var month=document.getElementById('dh-month').value;
-  var dlvrs=(DLVR[mob]||[]).filter(function(d){return!month||d.date.startsWith(month);});
-  dlvrs.sort(function(a,b){return new Date(a.date)-new Date(b.date);});
-  var rate=RATES[mob]||0;
-  var lines=dlvrs.map(function(d){return'  📅 '+fmtDate(d.date)+': '+d.qty+'L = ₹'+(d.qty*rate).toFixed(0);}).join('\n');
-  var totalQty=dlvrs.reduce(function(s,d){return s+d.qty;},0);
-  var msg='🥛 *Delivery Report — '+c.name+'*\n📅 '+month+'\n━━━━━━━━━━━━━━\n'+lines+'\n━━━━━━━━━━━━━━\n*Total: '+totalQty.toFixed(1)+'L = ₹'+(totalQty*rate).toFixed(0)+'*\n\nShree Kamal Ghee & Dairy';
-  window.open('https://wa.me/91'+emp.mobile+'?text='+encodeURIComponent(msg),'_blank');
-}
-
-// ===== PAYMENT =====
-function lookupPayC(){
-  var m=document.getElementById('pay-mob').value.trim();
-  var c=DB.find(function(x){return x.mobile===m;});
-  document.getElementById('pay-name').value=c?c.name:(m.length===10?'Not found':'');
-  if(c){
-    var rate=RATES[m]||0;
-    var totalDlvr=(DLVR[m]||[]).reduce(function(s,d){return s+d.qty;},0);
-    var totalAmt=totalDlvr*rate;
-    var totalPaid=(PAYMENTS[m]||[]).reduce(function(s,p){return s+p.amt;},0);
-    var pending=calcPending(m);
-    document.getElementById('pay-pending-box').innerHTML=
-      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center">'+
-        '<div><div style="font-size:1rem;font-weight:900;color:var(--b)">'+totalDlvr.toFixed(1)+'L</div><div style="font-size:0.68rem;color:#999">Total</div></div>'+
-        '<div><div style="font-size:1rem;font-weight:900;color:var(--amber)">₹'+totalAmt.toFixed(0)+'</div><div style="font-size:0.68rem;color:#999">Due</div></div>'+
-        '<div><div style="font-size:1rem;font-weight:900;color:var(--g)">₹'+totalPaid.toFixed(0)+'</div><div style="font-size:0.68rem;color:#999">Paid</div></div>'+
-        '<div><div style="font-size:1rem;font-weight:900;color:var(--r)">₹'+pending.toFixed(0)+'</div><div style="font-size:0.68rem;color:#999">Pending</div></div>'+
-      '</div>';
-    document.getElementById('pay-amt').value=pending>0?pending.toFixed(0):'';
-  } else {
-    document.getElementById('pay-pending-box').innerHTML='<div style="color:#999;font-size:0.82rem;text-align:center">Customer mobile dalein to pending dikhega</div>';
+window.onload = function() {
+  if(!FIREBASE_URL || FIREBASE_URL.includes("YOUR_FIREBASE_URL_HERE")) {
+    document.getElementById('loading-text').innerHTML = "<span style='color:#EF4444'>Error:</span> Line 432 par apna Firebase URL dalein!";
+    return;
   }
-}
-function savePayment(){
-  var mob=document.getElementById('pay-mob').value.trim();
-  var amt=parseFloat(document.getElementById('pay-amt').value)||0;
-  var dt=document.getElementById('pay-date').value;
-  var note=document.getElementById('pay-note').value.trim();
-  var c=DB.find(function(x){return x.mobile===mob;});
-  if(!c){toast('Customer nahi mila!');return;}
-  if(!amt){toast('Amount dalein!');return;}
-  if(!dt){toast('Date select karein!');return;}
-  if(!PAYMENTS[mob])PAYMENTS[mob]=[];
-  PAYMENTS[mob].push({date:dt,amt:amt,note:note,id:Date.now()});
-  savePAYMENTS();toast('✅ ₹'+amt+' payment saved for '+c.name+'!');lookupPayC();
-}
-function renderPayHistory(){
-  var mob=document.getElementById('payh-mob').value.trim();
-  var month=document.getElementById('payh-month').value;
-  var el=document.getElementById('pay-history-result');
-  var c=DB.find(function(x){return x.mobile===mob;});
-  if(!c){el.innerHTML='<div style="color:#ccc;text-align:center;padding:20px">Customer nahi mila</div>';return;}
-  var pays=(PAYMENTS[mob]||[]).filter(function(p){return!month||p.date.startsWith(month);});
-  pays.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
-  var total=pays.reduce(function(s,p){return s+p.amt;},0);
-  if(!pays.length){el.innerHTML='<div style="color:#ccc;text-align:center;padding:20px">Koi payment nahi</div>';return;}
-  el.innerHTML=
-    '<div class="dstat" style="margin-bottom:12px"><div class="dv" style="color:var(--g)">₹'+total.toFixed(0)+'</div><div class="dl" style="color:var(--g)">Total Received</div></div>'+
-    '<div class="tw"><table><thead><tr><th>Date</th><th>Amount</th><th>Mode</th><th>Action</th></tr></thead><tbody>'+
-    pays.map(function(p){return'<tr><td>'+fmtDate(p.date)+'</td><td style="font-weight:700;color:var(--g)">₹'+p.amt.toFixed(0)+'</td><td>'+(p.note||'—')+'</td><td><button class="ib" onclick="delPayment(\''+mob+'\','+p.id+')">🗑️</button></td></tr>';}).join('')+
-    '</tbody></table></div>';
-}
-function delPayment(mob,id){if(!confirm('Payment delete karein?'))return;PAYMENTS[mob]=(PAYMENTS[mob]||[]).filter(function(p){return p.id!==id;});savePAYMENTS();renderPayHistory();toast('Deleted!');}
+  loadAllData();
+};
 
-// ===== RATE SET (with delivery toggle) =====
-function renderRateList(){
-  var el=document.getElementById('rate-list');if(!el)return;
-  if(!DB.length){el.innerHTML='<div style="color:#ccc;text-align:center;padding:20px">Pehle customer register karein</div>';return;}
-  el.innerHTML=DB.map(function(c){
-    var rate=RATES[c.mobile]||'';
-    var inDel=!!(RATES[c.mobile]); // agar rate set hai to delivery mein hai
-    return'<div class="del-row" id="rrow-'+c.mobile+'" style="'+(inDel?'background:#f0fdf4;border-radius:10px;padding:10px 8px;':'')+'">'+
-      '<div>'+
-        '<div style="display:flex;align-items:center;gap:8px">'+
-          '<div style="font-weight:800;font-size:0.9rem">'+c.name+'</div>'+
-          '<span style="font-size:0.68rem;padding:2px 8px;border-radius:20px;font-weight:700;'+(inDel?'background:#dcfce7;color:#16a34a':'background:#fee2e2;color:#dc2626')+'">'+(inDel?'✅ Delivery ON':'❌ Delivery OFF')+'</span>'+
-        '</div>'+
-        '<div style="font-size:0.72rem;color:#999;margin-top:2px">'+c.mobile+'</div>'+
-      '</div>'+
-      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
-        '<input type="number" id="rate-'+c.mobile+'" value="'+rate+'" min="0" step="1" style="width:80px;border:2px solid #EDE0D4;border-radius:8px;padding:6px 8px;font-size:0.88rem;text-align:center;outline:none" placeholder="₹/L">'+
-        '<span style="font-size:0.72rem;color:#999">₹/L</span>'+
-        '<button class="btn '+(inDel?'bd':'bp')+'" style="padding:6px 12px;font-size:0.75rem" onclick="toggleDelivery(\''+c.mobile+'\')">'+(inDel?'❌ Remove':'➕ Add')+'</button>'+
-        '<button class="btn bp" style="padding:6px 12px;font-size:0.75rem;background:linear-gradient(135deg,#0369a1,#0284c7)" onclick="saveRate(\''+c.mobile+'\')">💾 Rate</button>'+
-      '</div>'+
-    '</div>';
-  }).join('');
-}
+function initApp() {
+  var d = new Date();
+  var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  document.getElementById('dh-date').innerHTML = days[d.getDay()]+', <b>'+d.getDate()+' '+months[d.getMonth()]+'</b>';
+  
+  var todayStr = fmtDate(d);
+  document.getElementById('del-date').value = todayStr;
+  document.getElementById('dw-date').value = todayStr;
+  document.getElementById('od').value = todayStr;
+  
+  var nextD = new Date(); nextD.setDate(d.getDate()+1);
+  document.getElementById('oexp').value = fmtDate(nextD);
+  
+  var mStr = todayStr.substring(0,7);
+  document.getElementById('dh-month').value = mStr;
+  document.getElementById('payh-month').value = mStr;
+  document.getElementById('sum-month').value = mStr;
+  document.getElementById('pay-date').value = todayStr;
 
-function toggleDelivery(mob){
-  var rateEl=document.getElementById('rate-'+mob);
-  var currentRate=RATES[mob]||0;
-  if(currentRate>0){
-    // Remove from delivery
-    if(!confirm('Is customer ko delivery list se hatao?'))return;
-    delete RATES[mob];
-  } else {
-    // Add to delivery - rate set karna zaroori hai
-    var r=parseFloat(rateEl?rateEl.value:0)||0;
-    if(!r){toast('Pehle rate dalein phir Add karo!');if(rateEl)rateEl.focus();return;}
-    RATES[mob]=r;
-  }
-  saveRATES();
-  renderRateList();
+  renderDashboard();
+  renderCList();
+  renderProdGrid();
+  renderProdManage();
   renderDeliveryMark();
-  var c=DB.find(function(x){return x.mobile===mob;});
-  toast(RATES[mob]?'✅ '+(c?c.name:mob)+' delivery list mein add hua!':'❌ '+(c?c.name:mob)+' delivery list se hata diya!');
-}
-function saveRate(mob){
-  var el=document.getElementById('rate-'+mob);if(!el)return;
-  var rate=parseFloat(el.value)||0;
-  if(!rate){toast('Rate 0 nahi ho sakta!');return;}
-  RATES[mob]=rate;saveRATES();
-  renderRateList();
-  var c=DB.find(function(x){return x.mobile===mob;});
-  toast('✅ '+(c?c.name:mob)+' rate set: ₹'+rate+'/L');
+  renderEList();
+  renderEReport();
 }
 
-// ===== DATE WISE ALL CUSTOMERS =====
-function renderDateWise(){
-  var dt=document.getElementById('dw-date').value;
-  var el=document.getElementById('datewise-result');
-  if(!dt){el.innerHTML='<div style="color:#ccc;text-align:center;padding:20px">Date select karein</div>';return;}
-  var dCusts=DB.filter(function(c){return RATES[c.mobile];});
-  if(!dCusts.length){el.innerHTML='<div style="color:#ccc;text-align:center;padding:20px">Koi delivery customer nahi</div>';return;}
-  var rows=dCusts.map(function(c){
-    var rate=RATES[c.mobile]||0;
-    var d=(DLVR[c.mobile]||[]).find(function(x){return x.date===dt;});
-    var qty=d?d.qty:0;
-    var amt=qty*rate;
-    var delivered=d?d.delivered:false;
-    return{name:c.name,mob:c.mobile,rate:rate,qty:qty,amt:amt,delivered:delivered};
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.innerHTML = msg; t.className = "toast on";
+  setTimeout(function(){t.className="toast";},2500);
+}
+
+function fmtDate(d) {
+  if(!d) return '';
+  var date = new Date(d);
+  var w = date.getFullYear();
+  var m = String(date.getMonth()+1).padStart(2,'0');
+  var j = String(date.getDate()).padStart(2,'0');
+  return w+'-'+m+'-'+j;
+}
+
+function getZone(c) {
+  if(!c.orders || !c.orders.length) return 'red';
+  var last = new Date(c.orders[c.orders.length-1].date);
+  var diff = Math.floor((new Date() - last)/(1000*60*60*24));
+  if(diff <= 7) return 'green';
+  if(diff <= 15) return 'blue';
+  if(diff <= 30) return 'yellow';
+  return 'red';
+}
+
+function syncCustomers(cb) {
+  var map = {};
+  DB.forEach(function(c){ map[c.mobile] = c; });
+  saveCloud("customers", map, cb);
+}
+
+function renderDashboard() {
+  document.getElementById('k-total').innerText = DB.length;
+  var ords = 0, rev = 0;
+  DB.forEach(function(c){
+    if(c.orders) {
+      ords += c.orders.length;
+      c.orders.forEach(function(o){ rev += (o.total||0); });
+    }
   });
-  var totalQty=rows.reduce(function(s,r){return s+r.qty;},0);
-  var totalAmt=rows.reduce(function(s,r){return s+r.amt;},0);
-  el.innerHTML=
-    '<div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:10px;padding:12px;margin-bottom:12px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap">'+
-      '<div style="text-align:center"><div style="font-size:1.2rem;font-weight:900;color:var(--b)">'+totalQty.toFixed(1)+'L</div><div style="font-size:0.7rem;color:#1d4ed8">Total Qty</div></div>'+
-      '<div style="text-align:center"><div style="font-size:1.2rem;font-weight:900;color:var(--amber)">₹'+totalAmt.toFixed(0)+'</div><div style="font-size:0.7rem;color:#1d4ed8">Total Amount</div></div>'+
-      '<div style="text-align:center"><div style="font-size:1.2rem;font-weight:900;color:var(--g)">'+rows.filter(function(r){return r.delivered;}).length+'/'+rows.length+'</div><div style="font-size:0.7rem;color:#1d4ed8">Delivered</div></div>'+
-    '</div>'+
-    '<div class="tw"><table><thead><tr><th>Customer</th><th>Mobile</th><th>Rate</th><th>Qty (L)</th><th>Amount</th><th>Status</th></tr></thead><tbody>'+
-    rows.map(function(r){return'<tr>'+
-      '<td><b>'+r.name+'</b></td>'+
-      '<td>'+r.mob+'</td>'+
-      '<td>₹'+r.rate+'/L</td>'+
-      '<td style="font-weight:700;color:var(--b)">'+(r.qty>0?r.qty+'L':'—')+'</td>'+
-      '<td style="font-weight:700;color:var(--amber)">'+(r.amt>0?'₹'+r.amt.toFixed(0):'—')+'</td>'+
-      '<td>'+(r.qty===0?'<span style="color:#999">Not Marked</span>':r.delivered?'<span style="color:var(--g);font-weight:700">✅ Done</span>':'<span style="color:var(--y);font-weight:700">⏳ Pending</span>')+'</td>'+
-    '</tr>';}).join('')+
-    '</tbody></table></div>';
-}
+  document.getElementById('k-orders').innerText = ords;
+  document.getElementById('k-rev').innerText = '₹' + rev.toFixed(0);
 
-// ===== SUMMARY =====
-function renderSummary(){
-  var month=document.getElementById('sum-month').value;
-  var el=document.getElementById('summary-result');if(!el)return;
-  var rows=DB.filter(function(c){return RATES[c.mobile];}).map(function(c){
-    var rate=RATES[c.mobile]||0;
-    var dlvrs=(DLVR[c.mobile]||[]).filter(function(d){return!month||d.date.startsWith(month);});
-    var qty=dlvrs.reduce(function(s,d){return s+d.qty;},0);
-    var amt=qty*rate;
-    var paid=(PAYMENTS[c.mobile]||[]).filter(function(p){return!month||p.date.startsWith(month);}).reduce(function(s,p){return s+p.amt;},0);
-    var pending=calcPending(c.mobile);
-    return{name:c.name,mob:c.mobile,rate:rate,qty:qty,amt:amt,paid:paid,pending:pending,days:dlvrs.length};
+  var ct = {green:0,blue:0,yellow:0,red:0};
+  DB.forEach(function(c){ ct[getZone(c)]++; });
+  
+  document.getElementById('zn-g').innerText = ct.green;
+  document.getElementById('zn-b').innerText = ct.blue;
+  document.getElementById('zn-y').innerText = ct.yellow;
+  document.getElementById('zn-r').innerText = ct.red;
+  
+  document.getElementById('zs-g').innerText = ct.green;
+  document.getElementById('zs-b').innerText = ct.blue;
+  document.getElementById('zs-y').innerText = ct.yellow;
+  document.getElementById('zs-r').innerText = ct.red;
+
+  var allO = [];
+  DB.forEach(function(c){
+    if(c.orders){
+      c.orders.forEach(function(o){
+        allO.push({cname:c.name,cmob:c.mobile,date:o.date,total:o.total});
+      });
+    }
   });
-  if(!rows.length){el.innerHTML='<div style="color:#ccc;text-align:center;padding:30px">Is month koi delivery data nahi</div>';return;}
-  var tQty=rows.reduce(function(s,r){return s+r.qty;},0);
-  var tAmt=rows.reduce(function(s,r){return s+r.amt;},0);
-  var tPaid=rows.reduce(function(s,r){return s+r.paid;},0);
-  var tPend=rows.reduce(function(s,r){return s+r.pending;},0);
-  el.innerHTML=
-    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">'+
-      '<div class="dstat"><div class="dv" style="color:var(--b)">'+tQty.toFixed(1)+'L</div><div class="dl">Total Qty</div></div>'+
-      '<div class="dstat"><div class="dv" style="color:var(--amber)">₹'+tAmt.toFixed(0)+'</div><div class="dl">Total Due</div></div>'+
-      '<div class="dstat"><div class="dv" style="color:var(--g)">₹'+tPaid.toFixed(0)+'</div><div class="dl">Collected</div></div>'+
-      '<div class="dstat"><div class="dv" style="color:var(--r)">₹'+tPend.toFixed(0)+'</div><div class="dl">Pending</div></div>'+
-    '</div>'+
-    '<div class="tw"><table><thead><tr><th>Name</th><th>Rate</th><th>Days</th><th>Qty</th><th>Amount</th><th>Paid</th><th>Pending</th><th>WA</th></tr></thead><tbody>'+
-    rows.map(function(r){return'<tr>'+
-      '<td><b>'+r.name+'</b><br><span style="font-size:0.7rem;color:#999">'+r.mob+'</span></td>'+
-      '<td>₹'+r.rate+'/L</td>'+
-      '<td style="text-align:center">'+r.days+'</td>'+
-      '<td style="font-weight:700;color:var(--b)">'+r.qty.toFixed(1)+'L</td>'+
-      '<td style="font-weight:700;color:var(--amber)">₹'+r.amt.toFixed(0)+'</td>'+
-      '<td style="font-weight:700;color:var(--g)">₹'+r.paid.toFixed(0)+'</td>'+
-      '<td style="font-weight:700;color:'+(r.pending>0?'var(--r)':'var(--g)')+'">₹'+r.pending.toFixed(0)+'</td>'+
-      '<td><button class="ib" onclick="sendSummaryWA(\''+r.mob+'\')">📱</button></td>'+
-    '</tr>';}).join('')+'</tbody></table></div>';
-}
-function sendSummaryWA(mob){
-  var c=DB.find(function(x){return x.mobile===mob;});if(!c||!c.ref){toast('Referral employee nahi hai!');return;}
-  var emp=EDB.find(function(e){return e.aadhar===c.ref;});if(!emp){toast('Employee nahi mila!');return;}
-  var month=document.getElementById('sum-month').value;
-  var rate=RATES[mob]||0;
-  var dlvrs=(DLVR[mob]||[]).filter(function(d){return!month||d.date.startsWith(month);});
-  var qty=dlvrs.reduce(function(s,d){return s+d.qty;},0);
-  var amt=qty*rate;
-  var paid=(PAYMENTS[mob]||[]).filter(function(p){return!month||p.date.startsWith(month);}).reduce(function(s,p){return s+p.amt;},0);
-  var pending=calcPending(mob);
-  var msg='🥛 *Monthly Summary — '+c.name+'*\n📅 '+month+'\n━━━━━━━━━━━━━━\n📦 Total: '+qty.toFixed(1)+'L\n💰 Due: ₹'+amt.toFixed(0)+'\n✅ Paid: ₹'+paid.toFixed(0)+'\n⚠️ Pending: ₹'+pending.toFixed(0)+'\n━━━━━━━━━━━━━━\nShree Kamal Ghee & Dairy\n✨ Promise of Purity and Taste.';
-  window.open('https://wa.me/91'+emp.mobile+'?text='+encodeURIComponent(msg),'_blank');
-}
-function exportDeliveryExcel(){
-  var month=document.getElementById('sum-month').value;
-  var rows=[['Name','Mobile','Rate','Date','Qty (L)','Amount','Delivered']];
-  DB.forEach(function(c){var rate=RATES[c.mobile]||0;var dlvrs=(DLVR[c.mobile]||[]).filter(function(d){return!month||d.date.startsWith(month);});if(!dlvrs.length)return;dlvrs.forEach(function(d,i){rows.push([i===0?c.name:'',i===0?c.mobile:'',i===0?rate:'',fmtDate(d.date),d.qty,(d.qty*rate).toFixed(0),d.delivered?'Yes':'No']);});});
-  var csv=rows.map(function(r){return r.map(function(v){return'"'+String(v||'').replace(/"/g,'""')+'"';}).join(',');}).join('\n');
-  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='Delivery_'+month+'.csv';a.click();toast('📊 Excel download ho rahi hai!');
+  allO.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  var rec = allO.slice(0,5);
+  document.getElementById('d-recent').innerHTML = rec.length ? rec.map(function(o){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F2E8DF"><div><div style="font-weight:700;font-size:0.85rem">'+o.cname+'</div><div style="font-size:0.72rem;color:#999">'+fmtDate(o.date)+'</div></div><div style="font-weight:700;color:var(--amber)">₹'+(o.total||0).toFixed(0)+'</div></div>';
+  }).join('') : '<div style="color:#ccc;text-align:center;padding:20px;font-size:0.82rem">Koi order nahi</div>';
+
+  var top = DB.map(function(c){
+    return {name:c.name,spent:c.orders?c.orders.reduce(function(s,o){return s+(o.total||0);},0):0,cnt:c.orders?c.orders.length:0};
+  }).sort(function(a,b){return b.spent-a.spent;}).slice(0,5);
+  
+  document.getElementById('d-top').innerHTML = top.length ? top.map(function(c,i){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #F2E8DF"><div style="display:flex;align-items:center;gap:7px"><div style="width:20px;height:20px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:900;color:#fff">'+(i+1)+'</div><div><div style="font-weight:700;font-size:0.83rem">'+c.name+'</div><div style="font-size:0.68rem;color:#999">'+c.cnt+' orders</div></div></div><div style="font-weight:700;color:var(--g)">₹'+c.spent.toFixed(0)+'</div></div>';
+  }).join('') : '<div style="color:#ccc;text-align:center;padding:20px;font-size:0.82rem">Koi customer nahi</div>';
+
+  var tdate = document.getElementById('del-date').value;
+  var logs = DEL_LOGS[tdate] || {};
+  var tLit = 0;
+  Object.keys(logs).forEach(function(m){ tLit += parseFloat(logs[m].qty||0); });
+  document.getElementById('k-dlvr').innerText = tLit.toFixed(1) + 'L';
 }
 
-// ===== EXCEL =====
-function exportExcel(){if(!DB.length){toast('Koi data nahi!');return;}var rows=[['ID','Name','Mobile','Address','Registered','Zone','Total Orders','Last Order','Next Expected','Total Spent','Order Date','Products','Order Total','Note']];DB.forEach(function(c){var z=zone(c);var ts=c.orders?c.orders.reduce(function(s,o){return s+(o.total||0);},0):0;var lo=c.orders&&c.orders.length?c.orders[c.orders.length-1]:null;var nxt=lo&&lo.nextExpected?fmtDate(lo.nextExpected):'—';if(!c.orders||!c.orders.length){rows.push([c.id,c.name,c.mobile,c.address||'',fmtDate(c.reg),zoneLbl(z),0,'—','—',0,'','','','']);}else{c.orders.forEach(function(o,i){var prods=o.items.map(function(it){return it.product+' '+it.qty+it.unit+'@₹'+it.price;}).join('; ');rows.push([i===0?c.id:'',i===0?c.name:'',i===0?c.mobile:'',i===0?(c.address||''):'',i===0?fmtDate(c.reg):'',i===0?zoneLbl(z):'',i===0?c.orders.length:'',i===0?fmtDate(lo?lo.date:null):'',i===0?nxt:'',i===0?ts.toFixed(0):'',fmtDate(o.date),prods,(o.total||0).toFixed(0),o.note||'']);});}});var csv=rows.map(function(r){return r.map(function(v){return'"'+String(v||'').replace(/"/g,'""')+'"';}).join(',');}).join('\n');var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='ShreeKamalDairy_'+today()+'.csv';a.click();toast('Excel download ho rahi hai!');}
-function exportSingleExcel(){if(curMob)exportSByMob(curMob);}
-function exportSByMob(mob){var c=DB.find(function(x){return x.mobile===mob;});if(!c)return;var rows=[['Order Date','Products','Total','Note','Next Expected']];if(c.orders)c.orders.forEach(function(o){rows.push([fmtDate(o.date),o.items.map(function(i){return i.product+' '+i.qty+i.unit+'@₹'+i.price;}).join('; '),(o.total||0).toFixed(0),o.note||'',fmtDate(o.nextExpected||'')]);});var h='Customer: '+c.name+'\nMobile: '+c.mobile+'\n\n';var csv=h+rows.map(function(r){return r.map(function(v){return'"'+String(v).replace(/"/g,'""')+'"';}).join(',');}).join('\n');var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=c.name+'_'+today()+'.csv';a.click();toast(c.name+' ka Excel export ho gaya!');}
+function switchMain(p) {
+  document.querySelectorAll('.content > .panel').forEach(function(el){el.className="panel";});
+  document.getElementById('panel-'+p).className="panel on";
+  document.querySelectorAll('.main-tabs .mt').forEach(function(el){el.className="mt";});
+  event.target.className="mt on";
+  if(p==='today') renderToday();
+  if(p==='delivery') { renderDeliveryMark(); renderRateSetup(); }
+}
 
-// ===== DASHBOARD =====
-function renderDash(){var aO=[];DB.forEach(function(c){if(c.orders)c.orders.forEach(function(o){aO.push({date:o.date,total:o.total,cname:c.name});});});aO.sort(function(a,b){return new Date(b.date)-new Date(a.date);});document.getElementById('d-recent').innerHTML=aO.length?aO.slice(0,5).map(function(o){return'<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #F2E8DF"><div><div style="font-weight:700;font-size:0.83rem">'+o.cname+'</div><div style="font-size:0.72rem;color:#999">'+fmtDate(o.date)+'</div></div><div style="font-weight:700;color:var(--amber)">₹'+(o.total||0).toFixed(0)+'</div></div>';}).join(''):'<div style="color:#ccc;text-align:center;padding:20px;font-size:0.82rem">Koi order nahi</div>';var top=DB.map(function(c){return{name:c.name,spent:c.orders?c.orders.reduce(function(s,o){return s+(o.total||0);},0):0,cnt:c.orders?c.orders.length:0};}).sort(function(a,b){return b.spent-a.spent;}).slice(0,5);document.getElementById('d-top').innerHTML=top.length?top.map(function(c,i){return'<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #F2E8DF"><div style="display:flex;align-items:center;gap:7px"><div style="width:20px;height:20px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:900;color:#fff">'+(i+1)+'</div><div><div style="font-weight:700;font-size:0.83rem">'+c.name+'</div><div style="font-size:0.72rem;color:#999">'+c.cnt+' orders</div></div></div><div style="font-weight:700;color:var(--g)">₹'+c.spent.toFixed(0)+'</div></div>';}).join(''):'<div style="color:#ccc;text-align:center;padding:20px;font-size:0.82rem">Data nahi hai</div>';}
+function switchSub(p) {
+  document.querySelectorAll('#panel-customer .panel').forEach(function(el){el.className="panel";});
+  document.getElementById('sub-'+p).className="panel on";
+  document.querySelectorAll('#panel-customer .stabs .st').forEach(function(el){el.className="st";});
+  event.target.className="st on";
+}
 
-document.querySelectorAll('.mo').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('on');});});
-buildProdGrid();renderProdManage();updateStats();renderDash();
+function switchDel(p) {
+  document.querySelectorAll('#panel-delivery > .panel').forEach(function(el){el.className="panel";});
+  document.getElementById('dsub-'+p).className="panel on";
+  document.querySelectorAll('#panel-delivery .stabs .st').forEach(function(el){el.className="st del";});
+  event.target.className="st del on";
+  if(p==='drate') renderRateSetup();
+  if(p==='dsummary') renderSummary();
+}
+
+function switchEmp(p) {
+  document.querySelectorAll('#panel-employee > .panel').forEach(function(el){el.className="panel";});
+  var targetId = (p==='elist'||p==='ereg'||p==='esearch'||p==='ereport') ? (p==='elist'?'sub-elist':'sub-'+p) : 'sub-'+p;
+  if(p==='elist') targetId = 'sub-elist';
+  document.getElementById(targetId).className="panel on";
+  document.querySelectorAll('#panel-employee .stabs .st').forEach(function(el){el.className="st emp";});
+  event.target.className="st emp on";
+  if(p==='elist') renderEList();
+  if(p==='ereport') renderEReport();
+}
+
+function filterZone(z) {
+  curZone = z;
+  switchMain('customer');
+  switchSub('clist');
+  document.getElementById('f-z').value = z;
+  renderCList();
+}
+
+function registerCustomer() {
+  var name = document.getElementById('rn').value.trim();
+  var mobile = document.getElementById('rm').value.trim();
+  var addr = document.getElementById('ra').value.trim();
+  var ref = document.getElementById('r-ref').value.trim();
+  
+  if(!name || mobile.length<10) { alert("Naam aur valid mobile number zaroori hai"); return; }
+  
+  var exists = DB.find(function(c){return c.mobile===mobile;});
+  if(exists) { alert("Yis mobile number se customer pehle se register hai!"); return; }
+
+  var c = { name:name, mobile:mobile, address:addr, referral:ref, orders:[] };
+  DB.push(c);
+  syncCustomers(function(ok){
+    showToast("Customer safaltapoorvak register hua!");
+    clearReg();
+    renderDashboard();
+    renderCList();
+  });
+}
+
+function clearReg() {
+  document.getElementById('rn').value='';
+  document.getElementById('rm').value='';
+  document.getElementById('ra').value='';
+  document.getElementById('r-ref').value='';
+}
+
+function renderCList() {
+  var search = document.getElementById('f-s').value.toLowerCase();
+  var zone = document.getElementById('f-z').value;
+  var tbody = document.getElementById('c-tbody');
+  tbody.innerHTML = '';
+  
+  var filtered = DB.filter(function(c){
+    var mSearch = c.name.toLowerCase().includes(search) || c.mobile.includes(search) || (c.address&&c.address.toLowerCase().includes(search));
+    var mZone = zone === '' || getZone(c) === zone;
+    return mSearch && mZone;
+  });
+
+  if(!filtered.length) {
+    document.getElementById('c-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('c-empty').style.display = 'none';
+
+  filtered.forEach(function(c){
+    var z = getZone(c);
+    var zColors = {green:'green',blue:'blue',yellow:'yellow',red:'red'};
+    var zLabels = {green:'🟢 Green',blue:'🔵 Blue',yellow:'🟡 Yellow',red:'🔴 Red'};
+    
+    var lastO = c.orders && c.orders.length ? fmtDate(c.orders[c.orders.length-1].date) : 'N/A';
+    var nextO = c.orders && c.orders.length ? fmtDate(c.orders[c.orders.length-1].next_expected) : 'N/A';
+
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td><span class="cid">'+mobileShort(c.mobile)+'</span></td>'+
+      '<td style="font-weight:700">'+c.name+'</td>'+
+      '<td>'+c.mobile+'</td>'+
+      '<td>'+(c.address||'-')+'</td>'+
+      '<td>'+lastO+'</td>'+
+      '<td>'+nextO+'</td>'+
+      '<td><span class="zp '+zColors[z]+'"><span class="dot"></span>'+zLabels[z]+'</span></td>'+
+      '<td><button class="ib" onclick="delCustomer(\''+c.mobile+'\')" style="color:var(--r)">🗑️</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function mobileShort(m) { return m.substring(0,3)+'...'+m.substring(7); }
+
+function delCustomer(m) {
+  if(confirm("Kya aap sach me is customer ko hatana chahte hain?")) {
+    DB = DB.filter(function(c){return c.mobile!==m;});
+    syncCustomers(function(ok){
+      showToast("Customer hata diya gaya");
+      renderDashboard();
+      renderCList();
+    });
+  }
+}
+
+function renderProdGrid() {
+  var grid = document.getElementById('prod-grid');
+  grid.innerHTML = PRODUCTS.map(function(p){
+    return '<div class="pi" id="pi-'+p.id+'">'+
+      '<label><input type="checkbox" onchange="togglePSelection(\''+p.id+'\')"> '+p.icon+' '+p.name+'</label>'+
+      '<div class="row">'+
+        '<input type="number" id="pq-'+p.id+'" value="'+p.qty+'" step="0.1" min="0" oninput="calcOrderTotal()">'+
+        '<span class="unit">'+p.unit+'</span>'+
+      '</div>'+
+      '<div class="row">'+
+        '<input type="number" id="pr-'+p.id+'" placeholder="Rate ₹" oninput="calcOrderTotal()">'+
+        '<span class="unit">₹</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function togglePSelection(id) {
+  var box = document.getElementById('pi-'+id);
+  var cb = box.querySelector('input[type=checkbox]');
+  if(cb.checked) box.className = "pi sel";
+  else box.className = "pi";
+  calcOrderTotal();
+}
+
+function calcOrderTotal() {
+  var total = 0;
+  PRODUCTS.forEach(function(p){
+    var box = document.getElementById('pi-'+p.id);
+    var cb = box.querySelector('input[type=checkbox]');
+    if(cb.checked) {
+      var qty = parseFloat(document.getElementById('pq-'+p.id).value)||0;
+      var rate = parseFloat(document.getElementById('pr-'+p.id).value)||0;
+      total += (qty * rate);
+    }
+  });
+  document.getElementById('o-total').innerText = '₹' + total.toFixed(0);
+}
+
+function lookupC() {
+  var m = document.getElementById('om').value;
+  if(m.length>=10) {
+    var c = DB.find(function(x){return x.mobile===m;});
+    if(c) document.getElementById('on').value = c.name;
+    else document.getElementById('on').value = 'Customer Not Found';
+  }
+}
+
+function addOrder() {
+  var mob = document.getElementById('om').value.trim();
+  var odate = document.getElementById('od').value;
+  var exp = document.getElementById('oexp').value;
+  var note = document.getElementById('ono').value.trim();
+  
+  var c = DB.find(function(x){return x.mobile===mob;});
+  if(!c) { alert("Pehle valid registered mobile dalein"); return; }
+  if(!odate) { alert("Order date dalein"); return; }
+
+  var items = [];
+  var total = 0;
+  PRODUCTS.forEach(function(p){
+    var box = document.getElementById('pi-'+p.id);
+    if(box.querySelector('input[type=checkbox]').checked) {
+      var qty = parseFloat(document.getElementById('pq-'+p.id).value)||0;
+      var rate = parseFloat(document.getElementById('pr-'+p.id).value)||0;
+      if(qty>0 && rate>0) {
+        items.push({pid:p.id, name:p.name, qty:qty, rate:rate, unit:p.unit});
+        total += (qty*rate);
+      }
+    }
+  });
+
+  if(!items.length) { alert("Kam se kam ek item select karein jiska qty/rate ho"); return; }
+
+  if(!c.orders) c.orders = [];
+  c.orders.push({ date:odate, next_expected:exp, note:note, items:items, total:total });
+  
+  syncCustomers(function(ok){
+    showToast("Order safe save ho gaya!");
+    resetOrderForm();
+    renderDashboard();
+    renderCList();
+  });
+}
+
+function resetOrderForm() {
+  document.getElementById('om').value='';
+  document.getElementById('on').value='';
+  document.getElementById('ono').value='';
+  renderProdGrid();
+  document.getElementById('o-total').innerText='₹0';
+}
+
+function renderProdManage() {
+  var div = document.getElementById('prod-list-manage');
+  div.innerHTML = PRODUCTS.map(function(p){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px;border-bottom:1px solid #F2E8DF">'+
+      '<span>'+p.icon+' <b>'+p.name+'</b> (Standard: '+p.qty+' '+p.unit+')</span>'+
+      '<button class="ib" onclick="delProduct(\''+p.id+'\')" style="color:var(--r)">🗑️</button>'+
+    '</div>';
+  }).join('');
+}
+
+function addProduct() {
+  var name = document.getElementById('np-name').value.trim();
+  var icon = document.getElementById('np-icon').value.trim() || '🥛';
+  var unit = document.getElementById('np-unit').value;
+  var qty = parseFloat(document.getElementById('np-qty').value)||1;
+  
+  if(!name) { alert("Product naam zaroori hai"); return; }
+  var id = 'p_' + Date.now();
+  PRODUCTS.push({id:id, name:name, icon:icon, unit:unit, qty:qty});
+  
+  saveCloud("products", PRODUCTS, function(ok){
+    showToast("Naya product add ho gaya!");
+    document.getElementById('np-name').value='';
+    renderProdGrid();
+    renderProdManage();
+  });
+}
+
+function delProduct(id) {
+  if(confirm("Kya item hatana chahte hain?")) {
+    PRODUCTS = PRODUCTS.filter(function(p){return p.id!==id;});
+    saveCloud("products", PRODUCTS, function(ok){
+      showToast("Product hata diya");
+      renderProdGrid();
+      renderProdManage();
+    });
+  }
+}
+
+function renderToday() {
+  var tdate = fmtDate(new Date());
+  var list = document.getElementById('today-list');
+  list.innerHTML = '';
+  
+  var hits = DB.filter(function(c){
+    if(!c.orders || !c.orders.length) return false;
+    return fmtDate(c.orders[c.orders.length-1].next_expected) === tdate;
+  });
+
+  if(!hits.length) {
+    list.innerHTML = '<div style="color:#ccc;text-align:center;padding:30px">Aaj koi delivery scheduled nahi hai</div>';
+    return;
+  }
+
+  list.innerHTML = hits.map(function(c){
+    var last = c.orders[c.orders.length-1];
+    return '<div class="today-card">'+
+      '<div><div style="font-weight:900;font-size:0.95rem">'+c.name+'</div>'+
+      '<div style="font-size:0.75rem;color:#777;margin-top:2px">📞 '+c.mobile+' | 📍 '+(c.address||'No Address')+'</div>'+
+      '<div style="font-size:0.75rem;color:var(--amber);margin-top:4px;font-weight:700">Last Items: '+last.items.map(function(i){return i.name+' ('+i.qty+i.unit+')';}).join(', ')+'</div></div>'+
+      '<button class="btn bp" style="padding:6px 12px;font-size:0.72rem" onclick="openSingleWA(\''+c.mobile+'\',\'Namaste '+c.name+', aaj aapki delivery scheduled hai.\')">📱 Remind</button>'+
+    '</div>';
+  }).join('');
+}
+
+// ==========================================
+// DAILY DELIVERY LOGIC (FIREBASE CLOUD)
+// ==========================================
+function renderRateSetup() {
+  var div = document.getElementById('rate-list');
+  div.innerHTML = DB.map(function(c){
+    var rate = DEL_RATES[c.mobile] ? (DEL_RATES[c.mobile].rate||'') : '';
+    var baseQty = DEL_RATES[c.mobile] ? (DEL_RATES[c.mobile].qty||'') : '';
+    var isInc = DEL_RATES[c.mobile] ? DEL_RATES[c.mobile].active : false;
+    
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F2E8DF;flex-wrap:wrap;gap:8px">'+
+      '<div><div style="font-weight:700;font-size:0.85rem">'+c.name+'</div><div style="font-size:0.72rem;color:#999">'+c.mobile+'</div></div>'+
+      '<div style="display:flex;gap:6px;align-items:center">'+
+        '<input type="number" step="0.1" id="drq-'+c.mobile+'" value="'+baseQty+'" placeholder="Litre Qty" style="width:75px;border:1px solid #EDE0D4;border-radius:6px;padding:4px 6px;font-size:0.8rem;text-align:center">'+
+        '<input type="number" id="drr-'+c.mobile+'" value="'+rate+'" placeholder="Rate ₹/L" style="width:75px;border:1px solid #EDE0D4;border-radius:6px;padding:4px 6px;font-size:0.8rem;text-align:center">'+
+        '<label style="font-size:0.72rem;font-weight:700;display:flex;align-items:center;gap:3px">'+
+          '<input type="checkbox" id="dra-'+c.mobile+'" '+(isInc?'checked':'')+'> Active'+
+        '</label>'+
+        '<button class="btn bp" style="padding:5px 10px;font-size:0.72rem" onclick="saveCustomerRate(\''+c.mobile+'\')">Save</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function saveCustomerRate(mob) {
+  var qty = parseFloat(document.getElementById('drq-'+mob).value)||0;
+  var rate = parseFloat(document.getElementById('drr-'+mob).value)||0;
+  var active = document.getElementById('dra-'+mob).checked;
+  
+  if(qty<=0 || rate<=0) { alert("Valid Qty aur Rate bharein"); return; }
+  
+  DEL_RATES[mob] = { qty:qty, rate:rate, active:active };
+  saveCloud("del_rates", DEL_RATES, function(ok){
+    showToast("Rate aur delivery setting cloud par save ho gayi!");
+    renderDeliveryMark();
+  });
+}
+
+function renderDeliveryMark() {
+  var tdate = document.getElementById('del-date').value;
+  if(!tdate) return;
+  
+  document.getElementById('del-today-lbl').innerHTML = "Tareeh: <b>"+tdate+"</b> ki entries:";
+  var list = document.getElementById('delivery-list');
+  list.innerHTML = '';
+  
+  var activeCusts = DB.filter(function(c){ return DEL_RATES[c.mobile] && DEL_RATES[c.mobile].active; });
+  if(!activeCusts.length) {
+    list.innerHTML = '<div style="color:#ccc;text-align:center;padding:20px">Rate Set section me jaakar pehle customers activate karein</div>';
+    return;
+  }
+
+  var logs = DEL_LOGS[tdate] || {};
+
+  list.innerHTML = activeCusts.map(function(c){
+    var defaultQty = DEL_RATES[c.mobile].qty;
+    var currentQty = logs[c.mobile] !== undefined ? logs[c.mobile].qty : defaultQty;
+    var absent = logs[c.mobile] !== undefined ? logs[c.mobile].absent : false;
+    
+    return '<div class="del-row" id="drow-'+c.mobile+'" style="background:'+(absent?'#FEE2E2':'transparent')+';padding:6px;border-radius:8px">'+
+      '<div><div style="font-weight:700;font-size:0.85rem">'+c.name+'</div><div style="font-size:0.72rem;color:#777">Fix: '+defaultQty+'L @ ₹'+DEL_RATES[c.mobile].rate+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        '<input type="number" step="0.1" id="dlq-'+c.mobile+'" value="'+currentQty+'" style="width:65px;padding:4px;font-size:0.82rem;text-align:center;border:2px solid #EDE0D4;border-radius:6px" '+(absent?'disabled':'')+'> <b style="font-size:0.75rem">L</b>'+
+        '<button class="btn '+(absent?'bd':'bg')+'" style="padding:5px 9px;font-size:0.72rem" onclick="toggleAbsent(\''+c.mobile+'\')">'+(absent?'✖ Absent':'✔ Present')+'</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function toggleAbsent(mob) {
+  var row = document.getElementById('drow-'+mob);
+  var inp = document.getElementById('dlq-'+mob);
+  var btn = event.target;
+  if(row.style.backgroundColor.includes("rgb(254, 226, 226)") || row.style.backgroundColor==='rgba(255, 0, 0, 0.1)' || inp.disabled) {
+    row.style.backgroundColor = 'transparent';
+    inp.disabled = false;
+    btn.className = "btn bg"; btn.innerText = "✔ Present";
+  } else {
+    row.style.backgroundColor = '#FEE2E2';
+    inp.disabled = true;
+    btn.className = "btn bd"; btn.innerText = "✖ Absent";
+  }
+}
+
+function saveDeliveries() {
+  var tdate = document.getElementById('del-date').value;
+  if(!tdate) return;
+  
+  if(!DEL_LOGS[tdate]) DEL_LOGS[tdate] = {};
+  
+  var activeCusts = DB.filter(function(c){ return DEL_RATES[c.mobile] && DEL_RATES[c.mobile].active; });
+  activeCusts.forEach(function(c){
+    var inp = document.getElementById('dlq-'+c.mobile);
+    var absent = inp.disabled;
+    var qty = absent ? 0 : (parseFloat(inp.value)||0);
+    var rate = DEL_RATES[c.mobile].rate;
+    DEL_LOGS[tdate][c.mobile] = { qty:qty, rate:rate, absent:absent };
+  });
+
+  saveCloud("del_logs/" + tdate, DEL_LOGS[tdate], function(ok){
+    showToast("Aaj ki delivery reports cloud par save ho gayi hain!");
+    renderDashboard();
+  });
+}
+
+function renderDelHistory() {
+  var mob = document.getElementById('dh-mob').value.trim();
+  var month = document.getElementById('dh-month').value; 
+  var res = document.getElementById('del-history-result');
+  
+  if(mob.length<10 || !month) return;
+  var c = DB.find(function(x){return x.mobile===mob;});
+  if(!c) { res.innerHTML='<div style="color:red">No Customer Found</div>'; return; }
+
+  var html = '<h4>'+c.name+' - Delivery ('+month+')</h4><table style="margin-top:8px"><thead><tr><th>Date</th><th>Qty</th><th>Rate</th><th>Total</th><th>Status</th></tr></thead><tbody>';
+  var totalL = 0, totalRs = 0;
+
+  Object.keys(DEL_LOGS).sort().forEach(function(date){
+    if(date.startsWith(month) && DEL_LOGS[date][mob]) {
+      var log = DEL_LOGS[date][mob];
+      var rowAmt = log.qty * log.rate;
+      totalL += log.qty;
+      totalRs += rowAmt;
+      
+      html += '<tr><td>'+date+'</td><td>'+(log.absent?'0':log.qty)+' L</td><td>₹'+log.rate+'</td><td>₹'+rowAmt.toFixed(0)+'</td><td>'+(log.absent?'<span class="zp red"><span class="dot"></span>Absent</span>':'<span class="zp green"><span class="dot"></span>Delivered</span>')+'</td></tr>';
+    }
+  });
+
+  html += '<tr style="font-weight:bold;background:#F2E8DF"><td>TOTAL</td><td>'+totalL.toFixed(1)+' L</td><td>-</td><td>₹'+totalRs.toFixed(0)+'</td><td>-</td></tr>';
+  html += '</tbody></table>';
+  res.innerHTML = html;
+}
+
+function renderDateWise() {
+  var date = document.getElementById('dw-date').value;
+  var res = document.getElementById('datewise-result');
+  if(!date) return;
+  
+  var logs = DEL_LOGS[date];
+  if(!logs || !Object.keys(logs).length) {
+    res.innerHTML = '<div style="color:#ccc;text-align:center;padding:15px">Is tareeh ka koi record nahi mila</div>';
+    return;
+  }
+
+  var html = '<table><thead><tr><th>Customer</th><th>Mobile</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
+  var sumAmt = 0, sumL = 0;
+  
+  Object.keys(logs).forEach(function(m){
+    var c = DB.find(function(x){return x.mobile===m;}) || {name:'Unknown'};
+    var log = logs[m];
+    var amt = log.qty * log.rate;
+    sumAmt += amt; sumL += log.qty;
+    
+    html += '<tr><td><b>'+c.name+'</b></td><td>'+m+'</td><td>'+log.qty+'L</td><td>₹'+log.rate+'</td><td>₹'+amt.toFixed(0)+'</td><td>'+(log.absent?'<span class="zp red">Absent</span>':'<span class="zp green">Delivered</span>')+'</td></tr>';
+  });
+  
+  html += '<tr style="font-weight:900;background:#EDE0D4"><td>Total</td><td>-</td><td>'+sumL.toFixed(1)+'L</td><td>-</td><td>₹'+sumAmt.toFixed(0)+'</td><td>-</td></tr></tbody></table>';
+  res.innerHTML = html;
+}
+
+// ==========================================
+// PAYMENT SYSTEM
+// ==========================================
+function lookupPayC() {
+  var m = document.getElementById('pay-mob').value;
+  var box = document.getElementById('pay-pending-box');
+  if(m.length>=10) {
+    var c = DB.find(function(x){return x.mobile===m;});
+    if(c) {
+      document.getElementById('pay-name').value = c.name;
+      var totalBill = 0;
+      Object.keys(DEL_LOGS).forEach(function(date){
+        if(DEL_LOGS[date][m]) {
+          totalBill += (DEL_LOGS[date][m].qty * DEL_LOGS[date][m].rate);
+        }
+      });
+      var totalPaid = 0;
+      Object.keys(PAY_LOGS).forEach(function(pdate){
+        if(PAY_LOGS[pdate] && PAY_LOGS[pdate][m]) {
+          PAY_LOGS[pdate][m].forEach(function(p){ totalPaid += p.amt; });
+        }
+      });
+      var pend = totalBill - totalPaid;
+      box.innerHTML = '<div style="display:flex;justify-content:space-between;font-weight:700;font-size:0.85rem"><span>Kul Bill: ₹'+totalBill.toFixed(0)+'</span><span style="color:var(--r)">Pending: ₹'+pend.toFixed(0)+'</span></div>';
+    } else {
+      document.getElementById('pay-name').value = 'Mila nahi';
+      box.innerHTML = '';
+    }
+  }
+}
+
+function savePayment() {
+  var mob = document.getElementById('pay-mob').value.trim();
+  var date = document.getElementById('pay-date').value;
+  var amt = parseFloat(document.getElementById('pay-amt').value)||0;
+  var note = document.getElementById('pay-note').value.trim() || 'Cash';
+  
+  if(mob.length<10 || !date || amt<=0) { alert("Sahi details bharein"); return; }
+  
+  if(!PAY_LOGS[date]) PAY_LOGS[date] = {};
+  if(!PAY_LOGS[date][mob]) PAY_LOGS[date][mob] = [];
+  
+  PAY_LOGS[date][mob].push({ amt:amt, note:note });
+  
+  saveCloud("pay_logs/" + date, PAY_LOGS[date], function(ok){
+    showToast("Payment record cloud par save ho gaya!");
+    document.getElementById('pay-mob').value = '';
+    document.getElementById('pay-name').value = '';
+    document.getElementById('pay-amt').value = '';
+    document.getElementById('pay-pending-box').innerHTML = '';
+  });
+}
+
+function renderPayHistory() {
+  var mob = document.getElementById('payh-mob').value.trim();
+  var month = document.getElementById('payh-month').value;
+  var res = document.getElementById('pay-history-result');
+  if(mob.length<10 || !month) return;
+  
+  var html = '<table><thead><tr><th>Date</th><th>Amount</th><th>Mode</th></tr></thead><tbody>';
+  var total = 0;
+  
+  Object.keys(PAY_LOGS).sort().forEach(function(date){
+    if(date.startsWith(month) && PAY_LOGS[date][mob]) {
+      PAY_LOGS[date][mob].forEach(function(p){
+        total += p.amt;
+        html += '<tr><td>'+date+'</td><td style="color:var(--g);font-weight:700">₹'+p.amt+'</td><td>'+p.note+'</td></tr>';
+      });
+    }
+  });
+  html += '<tr style="font-weight:900;background:#EBF5FB"><td>TOTAL RECIEVED</td><td style="color:var(--g)">₹'+total+'</td><td>-</td></tr></tbody></table>';
+  res.innerHTML = html;
+}
+
+// ==========================================
+// SUMMARY AND REPORTS
+// ==========================================
+function renderSummary() {
+  var month = document.getElementById('sum-month').value;
+  var res = document.getElementById('summary-result');
+  if(!month) return;
+
+  var summaryMap = {};
+  DB.forEach(function(c){
+    summaryMap[c.mobile] = { name:c.name, milkL:0, bill:0, paid:0 };
+  });
+
+  Object.keys(DEL_LOGS).forEach(function(date){
+    if(date.startsWith(month)) {
+      var logs = DEL_LOGS[date];
+      Object.keys(logs).forEach(function(m){
+        if(summaryMap[m]) {
+          summaryMap[m].milkL += logs[m].qty;
+          summaryMap[m].bill += (logs[m].qty * logs[m].rate);
+        }
+      });
+    }
+  });
+
+  Object.keys(PAY_LOGS).forEach(function(date){
+    if(date.startsWith(month)) {
+      var logs = PAY_LOGS[date];
+      Object.keys(logs).forEach(function(m){
+        if(summaryMap[m]) {
+          logs[m].forEach(function(p){ summaryMap[m].paid += p.amt; });
+        }
+      });
+    }
+  });
+
+  var html = '<table><thead><tr><th>Customer</th><th>Total Milk</th><th>Total Bill</th><th>Paid</th><th>Balance</th></tr></thead><tbody>';
+  var sL=0, sB=0, sP=0;
+  
+  Object.keys(summaryMap).forEach(function(m){
+    var s = summaryMap[m];
+    var bal = s.bill - s.paid;
+    sL += s.milkL; sB += s.bill; sP += s.paid;
+    if(s.milkL > 0 || s.paid > 0) {
+      html += '<tr><td><b>'+s.name+'</b><br><small style="color:#777">'+m+'</small></td><td>'+s.milkL.toFixed(1)+' L</td><td>₹'+s.bill.toFixed(0)+'</td><td style="color:var(--g)">₹'+s.paid.toFixed(0)+'</td><td style="color:'+(bal>0?'var(--r)':'var(--g)')+';font-weight:700">₹'+bal.toFixed(0)+'</td></tr>';
+    }
+  });
+
+  html += '<tr style="font-weight:900;background:#EDE0D4"><td>TOTALS</td><td>'+sL.toFixed(1)+'L</td><td>₹'+sB.toFixed(0)+'</td><td>₹'+sP.toFixed(0)+'</td><td>₹'+(sB-sP).toFixed(0)+'</td></tr></tbody></table>';
+  res.innerHTML = html;
+}
+
+// ==========================================
+// EMPLOYEES LOGIC (FIREBASE CLOUD)
+// ==========================================
+function registerEmployee() {
+  var name = document.getElementById('en').value.trim();
+  var aadhar = document.getElementById('ea').value.trim();
+  var mob = document.getElementById('em').value.trim();
+  var addr = document.getElementById('eaddr').value.trim();
+  var role = document.getElementById('erole').value.trim() || 'Delivery Boy';
+
+  if(!name || aadhar.length<12 || mob.length<10) { alert("Sahi credentials bharein (Aadhar 12 digit, Mob 10 digit)"); return; }
+  
+  EMPLOYEES.push({ aadhar:aadhar, name:name, mobile:mob, address:addr, role:role });
+  
+  saveCloud("employees", EMPLOYEES, function(ok){
+    showToast("Employee account create ho gaya!");
+    document.getElementById('en').value=''; document.getElementById('ea').value=''; document.getElementById('em').value=''; document.getElementById('eaddr').value='';
+    renderEList();
+    renderEReport();
+  });
+}
+
+function renderEList() {
+  var tbody = document.getElementById('e-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = '';
+  EMPLOYEES.forEach(function(e){
+    var refs = DB.filter(function(c){return c.referral===e.aadhar;}).length;
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td><span class="eid">'+e.aadhar+'</span></td><td><b>'+e.name+'</b></td><td>'+e.mobile+'</td><td>'+e.role+'</td><td><span class="zp blue">'+refs+' active</span></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function renderEReport() {
+  var div = document.getElementById('e-report-div');
+  if(!div) return;
+  if(!EMPLOYEES.length) { div.innerHTML='<div style="color:#ccc;text-align:center;padding:15px">No Employee Registered</div>'; return; }
+  
+  div.innerHTML = EMPLOYEES.map(function(e){
+    var refs = DB.filter(function(c){return c.referral===e.aadhar;});
+    var totalSales = 0;
+    refs.forEach(function(c){ if(c.orders) c.orders.forEach(function(o){ totalSales+=(o.total||0); }); });
+    
+    return '<div style="background:var(--milk);border:2px solid #EDE0D4;padding:12px;border-radius:10px;margin-bottom:10px">'+
+      '<div style="display:flex;justify-content:space-between;font-weight:bold"><span>👤 '+e.name+' ('+e.role+')</span><span style="color:#7c3aed">Total Business: ₹'+totalSales+'</span></div>'+
+      '<div style="font-size:0.75rem;color:#777;margin-top:4px">Referrals: '+refs.map(function(r){return r.name+' ('+r.mobile+')';}).join(', ')+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function doCSrch() {
+  var m = document.getElementById('cs-in').value;
+  var res = document.getElementById('cs-result');
+  var c = DB.find(function(x){return x.mobile===m;});
+  if(!c) { res.innerHTML='<div class="card" style="color:red">No Customer Found!</div>'; return; }
+  
+  var html = '<div class="card"><div class="ph"><div class="pa">'+c.name[0]+'</div><div><h3>'+c.name+'</h3><p>📞 '+c.mobile+' | 📍 '+(c.address||'No Address')+'</p></div></div>';
+  html += '<div class="ig" style="margin-top:14px"><div class="ii"><div class="ik">Zone Status</div><div class="iv">'+getZone(c).toUpperCase()+'</div></div><div class="ii"><div class="ik">Total Orders</div><div class="iv">'+(c.orders?c.orders.length:0)+'</div></div></div>';
+  
+  html += '<div class="ct" style="margin-top:15px">🛒 Order Logs</div><div class="tl">';
+  if(c.orders && c.orders.length) {
+    c.orders.forEach(function(o){
+      html += '<div class="tli"><div class="tlc"><div class="tld">'+fmtDate(o.date)+'</div><div class="tli2">'+o.items.map(function(i){return i.name+' ('+i.qty+' x ₹'+i.rate+')';}).join(', ')+'</div><div class="tlt">₹'+o.total+'</div></div></div>';
+    });
+  } else html += '<p style="color:#999;font-size:0.8rem">No orders registered</p>';
+  html += '</div></div>';
+  res.innerHTML = html;
+}
+
+function doESrch() {
+  var a = document.getElementById('es-in').value;
+  var res = document.getElementById('es-result');
+  var e = EMPLOYEES.find(function(x){return x.aadhar===a;});
+  if(!e) { res.innerHTML='<div class="card" style="color:red">Employee data not found!</div>'; return; }
+  
+  var refs = DB.filter(function(c){return c.referral===a;});
+  res.innerHTML = '<div class="card"><h4>👔 '+e.name+' ('+e.role+')</h4><p>📞 '+e.mobile+' | 🏠 '+(e.address||'-')+'</p><p style="margin-top:8px;font-weight:bold;color:#7c3aed">Brought '+refs.length+' customers onto the platform.</p></div>';
+}
+
+// WhatsApp Actions
+function openSingleWA(mob, text) {
+  window.open("https://web.whatsapp.com/send?phone=91"+mob+"&text="+encodeURIComponent(text), "_blank");
+}
+
+function sendWABill() {
+  var mob = document.getElementById('om').value;
+  var name = document.getElementById('on').value;
+  var tot = document.getElementById('o-total').innerText;
+  if(mob.length<10 || name==='Customer Not Found') { alert("Valid customer selection mandatory"); return; }
+  var txt = "Namaste "+name+", Shree Kamal Ghee & Dairy se aapka order confirm ho gaya hai. Total Bill: "+tot+". Purity Promised!";
+  openSingleWA(mob, txt);
+}
+
+function openBcast() { document.getElementById('mo-bc').className="mo on"; }
+function closeBcast() { document.getElementById('mo-bc').className="mo"; }
+function sendBcast() {
+  var grp = document.getElementById('bc-grp').value;
+  var raw = document.getElementById('bc-msg').value;
+  if(!raw) return;
+  
+  var list = DB.filter(function(c){ return grp==='all' || getZone(c)===grp; });
+  if(!list.length) { alert("Is target group me koi customer nahi hai"); return; }
+  
+  list.forEach(function(c, i){
+    setTimeout(function(){
+      var msg = raw.replace(/{name}/g, c.name);
+      openSingleWA(c.mobile, msg);
+    }, i * 3000);
+  });
+  closeBcast();
+}
+
+function sendAllDeliveryWA() {
+  var tdate = document.getElementById('del-date').value;
+  var logs = DEL_LOGS[tdate] || {};
+  var cCount = 0;
+  
+  Object.keys(logs).forEach(function(mob){
+    var c = DB.find(function(x){return x.mobile===mob;});
+    if(c && c.referral) {
+      cCount++;
+      setTimeout(function(){
+        var log = logs[mob];
+        var txt = "Daily Report: Customer "+c.name+" ("+mob+") ko date "+tdate+" ko "+(log.absent?'0 Litre (Absent)':log.qty+' Litre')+" milk deliver hua.";
+        openSingleWA(c.referral, txt);
+      }, cCount * 3000);
+    }
+  });
+  if(cCount===0) showToast("Koi aisi entries nahi hain jisme referral boy ka Aadhar saved ho.");
+}
+
+// Excel Export Utilities
+function exportExcel() {
+  var data = DB.map(function(c){
+    return {
+      "Customer Name": c.name,
+      "Mobile / ID": c.mobile,
+      "Address": c.address||'',
+      "Referral Aadhar": c.referral||'',
+      "Current Zone": getZone(c).toUpperCase(),
+      "Total Orders Count": c.orders?c.orders.length:0
+    };
+  });
+  var ws = XLSX.utils.json_to_sheet(data);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Customers");
+  XLSX.writeFile(wb, "Dairy_Customers_Cloud_Report.xlsx");
+}
+
+function exportDeliveryExcel() {
+  var month = document.getElementById('sum-month').value;
+  if(!month) return;
+  
+  var rows = [];
+  DB.forEach(function(c){
+    var item = { "Customer Name":c.name, "Mobile":c.mobile, "Total Litres":0, "Total Cost (₹)":0, "Paid (₹)":0, "Balance Due":0 };
+    
+    Object.keys(DEL_LOGS).forEach(function(date){
+      if(date.startsWith(month) && DEL_LOGS[date][c.mobile]) {
+        item["Total Litres"] += DEL_LOGS[date][c.mobile].qty;
+        item["Total Cost (₹)"] += (DEL_LOGS[date][c.mobile].qty * DEL_LOGS[date][c.mobile].rate);
+      }
+    });
+
+    Object.keys(PAY_LOGS).forEach(function(date){
+      if(date.startsWith(month) && PAY_LOGS[date][c.mobile]) {
+        PAY_LOGS[date][c.mobile].forEach(function(p){ item["Paid (₹)"] += p.amt; });
+      }
+    });
+
+    item["Balance Due"] = item["Total Cost (₹)"] - item["Paid (₹)"];
+    if(item["Total Litres"]>0 || item["Paid (₹)"]>0) rows.push(item);
+  });
+
+  var ws = XLSX.utils.json_to_sheet(rows);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Monthly_Delivery");
+  XLSX.writeFile(wb, "Delivery_Summary_"+month+".xlsx");
+}
 </script>
 </body>
-                                                       </html>
+</html>
