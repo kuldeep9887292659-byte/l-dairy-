@@ -107,7 +107,7 @@ tbody td{padding:9px 12px;color:var(--brown);vertical-align:middle}
 .tlc{background:var(--cream);border-radius:10px;padding:11px 14px;border-left:3px solid var(--amber)}
 .tld{font-size:0.72rem;color:#999;margin-bottom:3px}
 .tli2{font-size:0.84rem;font-weight:700;color:var(--brown);margin-bottom:3px}
-.tlt{font-size:0.95rem;color:var(--amber);font-weight:800}
+.tld .tlt{font-size:0.95rem;color:var(--amber);font-weight:800}
 .tb2{background:linear-gradient(135deg,var(--brown),#5C3D2E);border-radius:10px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
 .tb2 .tl2{font-size:0.75rem;color:rgba(255,255,255,.6);text-transform:uppercase}
 .tb2 .tv{font-size:1.5rem;font-weight:900;color:var(--amber2)}
@@ -207,14 +207,245 @@ tbody td{padding:9px 12px;color:var(--brown);vertical-align:middle}
   <div class="panel" id="panel-customer">
     <div class="stabs">
       <button class="st on" onclick="switchSub('register')">➕ Register</button>
-      <button class="st" onclick="switchSub('clist')">👥 All Customers</button> <button class="st" onclick="switchSub('csearch')">🔍 Search</button> </div> <div class="panel on" id="sub-register"> <div class="card"> <div class="ct">🆕 Register New Customer</div> <div class="fgrid"> <div class="fg"><label>Customer Name *</label><input id="rn" placeholder="Poora naam"></div> <div class="fg"><label>Mobile * (= ID)</label><input type="tel" id="rm" maxlength="10" placeholder="10 digit mobile"></div> <div class="fg"><label>Address</label><input id="ra" placeholder="Mohalla / Colony"></div> <div class="fg"><label>Referral Employee ID (Optional)</label><input id="r-ref" maxlength="12" placeholder="12 digit Aadhar"></div> </div> <button class="btn bp" onclick="registerCustomer()">✅ Register</button> <button class="btn bg" onclick="clearReg()" style="margin-left:8px">🔄 Clear</button> </div> </div> <div class="panel" id="sub-clist"> <div class="card"> <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center"> <input type="text" id="f-s" placeholder="🔍 Search..." oninput="renderCList()" style="flex:1;min-width:140px;border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.85rem;outline:none;color:var(--brown)"> <select id="f-z" onchange="renderCList()" style="border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.82rem;outline:none;color:var(--brown)"> <option value="">All Zones</option> <option value="green">🟢 Green</option><option value="blue">🔵 Blue</option> <option value="yellow">🟡 Yellow</option><option value="red">🔴 Red</option> </select> <button class="btn bxl" onclick="exportExcel()">📊 Excel</button> </div> <div class="tw"> <table><thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Location</th><th>Last Order</th><th>Next Expected</th><th>Zone</th><th>Actions</th></tr></thead> <tbody id="c-tbody"></tbody></table> <div id="c-empty" style="display:none;text-align:center;padding:40px;color:#ccc">Koi customer nahi mila</div> </div> </div> </div> <div class="panel" id="sub-csearch"> <div class="sh-box"> <h2>🔍 Customer Search</h2> <p>Mobile number dalein — poori history ek jagah</p> <div class="sb"> <input type="tel" id="cs-in" maxlength="10" placeholder="10-digit mobile..." oninput="if(this.value.length>=10)doCSrch()"> <button onclick="doCSrch()">Search</button> </div> </div> <div id="cs-result"></div> </div> </div> <div class="panel" id="panel-order"> <div class="card"> <div class="ct">🛒 Add New Order</div> <div class="fgrid"> <div class="fg"><label>Customer Mobile *</label><input type="tel" id="om" maxlength="10" placeholder="10 digit" oninput="lookupC()"></div> <div class="fg"><label>Customer Name</label><input id="on" readonly placeholder="Auto-fill" style="background:#F5F0EA;color:#999"></div> <div class="fg"><label>Order Date</label><input type="date" id="od"></div> <div class="fg"><label>Next Expected Date</label><input type="date" id="oexp"></div> <div class="fg"><label>Note</label><input id="ono" placeholder="Home delivery, urgent etc."></div> </div> <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--amber);margin-bottom:8px">Products</div> <div class="pgrid" id="prod-grid"></div> <div class="tb2"> <div><div class="tl2">Order Total</div><div class="tv" id="o-total">₹0</div></div> <div style="display:flex;gap:8px;flex-wrap:wrap"> <button class="btn bp" onclick="addOrder()">✅ Save Order</button> <button class="btn bwa" onclick="sendWABill()">📱 WA Bill</button> </div> </div> </div> <div class="card"> <div class="ct">🧺 Manage Products</div> <div style="background:var(--cream);border-radius:10px;padding:14px;margin-bottom:14px"> <div class="fgrid" style="margin-bottom:10px"> <div class="fg"><label>Product Name *</label><input id="np-name" placeholder="e.g. Lassi"></div> <div class="fg"><label>Emoji</label><input id="np-icon" placeholder="🥛" maxlength="4"></div> <div class="fg"><label>Unit</label><select id="np-unit"><option value="L">Litre</option><option value="Kg">Kilogram</option><option value="Pcs">Pieces</option><option value="g">Grams</option><option value="Packet">Packet</option></select></div> <div class="fg"><label>Default Qty</label><input type="number" id="np-qty" value="1" min="0.1" step="0.1"></div> </div> <button class="btn bp" onclick="addProduct()">➕ Add Product</button> </div> <div id="prod-list-manage" style="font-size:0.82rem"></div> </div> </div> <div class="panel" id="panel-today"> <div class="card"> <div class="ct">📅 Today's Expected Orders</div> <p style="font-size:0.78rem;color:#999;margin-bottom:12px">Jin customers ki aaj expected delivery date hai</p> <div id="today-list"></div> </div> </div> <div class="panel" id="panel-delivery"> <div class="del-header"><h2>🥛 Daily Milk Delivery</h2><p>Roz ki delivery, payment aur rate management</p></div> <div class="stabs"> <button class="st del on" onclick="switchDel('dmark')">📋 Mark Delivery</button> <button class="st del" onclick="switchDel('dhistory')">📅 History</button> <button class="st del" onclick="switchDel('dpayment')">💰 Payment</button> <button class="st del" onclick="switchDel('drate')">⚙️ Rate Set</button> <button class="st del" onclick="switchDel('dsummary')">📊 Summary</button> </div> <div class="panel on" id="dsub-dmark"> <div class="card"> <div class="ct">📋 Aaj ki Delivery Mark Karo</div> <div style="font-size:0.8rem;color:#999;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"> <span id="del-today-lbl"></span> <input type="date" id="del-date" onchange="renderDeliveryMark()" style="border:2px solid #EDE0D4;border-radius:9px;padding:7px 12px;font-size:0.82rem;outline:none;color:var(--brown)"> </div> <div id="delivery-list"></div> <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"> <button class="btn bblu" onclick="saveDeliveries()">✅ Save Delivery</button> <button class="btn bwa" onclick="sendAllDeliveryWA()">📱 Referral ko WA</button> </div> </div> </div> <div class="panel" id="dsub-dhistory"> <div class="card"> <div class="ct">📅 Date-wise Delivery History</div> <div class="fgrid" style="margin-bottom:14px"> <div class="fg"><label>Customer Mobile</label><input type="tel" id="dh-mob" maxlength="10" placeholder="Mobile dalein..." oninput="if(this.value.length>=10)renderDelHistory()"></div> <div class="fg"><label>Month</label><input type="month" id="dh-month" onchange="renderDelHistory()"></div> </div> <div id="del-history-result"><div style="color:#ccc;text-align:center;padding:30px">Mobile number dalein</div></div> </div> <div class="card"> <div class="ct">📆 Sabhi Customers — Date Wise</div> <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center"> <div class="fg" style="margin:0;flex:1"> <label>Date Select Karo</label> <input type="date" id="dw-date" onchange="renderDateWise()" style="border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.85rem;outline:none;color:var(--brown);width:100%"> </div> </div> <div id="datewise-result"><div style="color:#ccc;text-align:center;padding:20px">Date select karein</div></div> </div> </div> <div class="panel" id="dsub-dpayment"> <div class="card"> <div class="ct">💰 Payment Record Karo</div> <div class="fgrid"> <div class="fg"><label>Customer Mobile *</label><input type="tel" id="pay-mob" maxlength="10" placeholder="10 digit" oninput="lookupPayC()"></div> <div class="fg"><label>Customer Name</label><input id="pay-name" readonly placeholder="Auto-fill" style="background:#F5F0EA;color:#999"></div> <div class="fg"><label>Payment Date</label><input type="date" id="pay-date"></div> <div class="fg"><label>Amount (₹)</label><input type="number" id="pay-amt" placeholder="Kitna mila"></div> <div class="fg"><label>Mode (Cash/UPI etc.)</label><input id="pay-note" placeholder="Cash / UPI / Cheque"></div> </div> <div style="background:var(--cream);border-radius:10px;padding:14px;margin-bottom:14px" id="pay-pending-box"> <div style="color:#999;font-size:0.82rem;text-align:center">Customer mobile dalein to pending amount dikhega</div> </div> <button class="btn bp" onclick="savePayment()">✅ Payment Save</button> </div> <div class="card"> <div class="ct">💳 Payment History</div> <div class="fgrid" style="margin-bottom:12px"> <div class="fg"><label>Customer Mobile</label><input type="tel" id="payh-mob" maxlength="10" placeholder="Mobile dalein..." oninput="if(this.value.length>=10)renderPayHistory()"></div> <div class="fg"><label>Month</label><input type="month" id="payh-month" onchange="renderPayHistory()"></div> </div> <div id="pay-history-result"><div style="color:#ccc;text-align:center;padding:20px">Mobile number dalein</div></div> </div> </div> <div class="panel" id="dsub-drate"> <div class="card"> <div class="ct">⚙️ Customer Rate &amp; Delivery Setup</div> <p style="font-size:0.78rem;color:#999;margin-bottom:16px">Customer ko delivery list mein add karo aur rate set karo</p> <div id="rate-list"></div> </div> </div> <div class="panel" id="dsub-dsummary"> <div class="card"> <div class="ct">📊 Monthly Delivery Summary</div> <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center"> <input type="month" id="sum-month" onchange="renderSummary()" style="border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.85rem;outline:none;color:var(--brown)"> <button class="btn bxl" onclick="exportDeliveryExcel()">📊 Excel Export</button> </div> <div id="summary-result"><div style="color:#ccc;text-align:center;padding:30px">Month select karein</div></div> </div> </div> </div> <div class="panel" id="panel-employee"> <div class="emp-header"><h2>👔 Employees Corner</h2><p>Management, referrals & performance</p></div> <div class="stabs"> <button class="st emp on" onclick="switchEmp('ereg')">➕ Register</button> <button class="st emp" onclick="switchEmp('elist')">👥 All</button> <button class="st emp" onclick="switchEmp('esearch')">🔍 Search</button> <button class="st emp" onclick="switchEmp('ereport')">📊 Report</button> </div> <div class="panel on" id="esub-ereg"> <div class="card"> <div class="ct" style="color:#5b21b6">🆕 Register Employee</div> <div class="fgrid"> <div class="fg"><label>Name *</label><input id="en" placeholder="Poora naam"></div> <div class="fg"><label>Aadhar No. * (= ID)</label><input type="tel" id="ea" maxlength="12" placeholder="12 digit"></div> <div class="fg"><label>Mobile *</label><input type="tel" id="em" maxlength="10" placeholder="10 digit"></div> <div class="fg"><label>Address</label><input id="eaddr" placeholder="Address"></div> <div class="fg"><label>Role</label><input id="erole" placeholder="e.g. Delivery Boy / Manager"></div> </div> <button class="btn bemp" onclick="registerEmployee()">✅ Save Employee</button> </div> </div> <div class="panel" id="sub-elist"> <div class="card"> <div class="tw"> <table><thead><tr><th>Aadhar (ID)</th><th>Name</th><th>Mobile</th><th>Role</th><th>Referrals</th></tr></thead> <tbody id="e-tbody"></tbody></table> </div> </div> </div> <div class="panel" id="sub-esearch"> <div class="sh-box" style="background:linear-gradient(135deg,#2e1065,#5b21b6)"> <h2>🔍 Employee Search</h2> <p>Aadhar card number dalein</p> <div class="sb"> <input type="tel" id="es-in" maxlength="12" placeholder="12-digit Aadhar..." oninput="if(this.value.length>=12)doESrch()"> <button onclick="doESrch()" style="background:var(--amber)">Search</button> </div> </div> <div id="es-result"></div> </div> <div class="panel" id="sub-ereport"> <div class="card"> <div class="ct">📊 Employee Performance Report</div> <div id="e-report-div"></div> </div> </div> </div> </div> <div class="toast" id="toast"></div> <div class="mo" id="mo-bc"><div class="modal"><div class="mh"><h2>📢 Broadcast WhatsApp Message</h2><button class="mx" onclick="closeBcast()">✕</button></div><div class="fg"><label>Select Target Group</label><select id="bc-grp"><option value="all">Sabhi Customers</option><option value="green">🟢 Green Zone</option><option value="blue">🔵 Blue Zone</option><option value="yellow">🟡 Yellow Zone</option><option value="red">🔴 Red Zone</option></select></div><div class="fg"><label>Message Template</label><textarea id="bc-msg" rows="5" placeholder="Message likhein... Use {name} for Customer name"></textarea></div><button class="btn bwa" onclick="sendBcast()">🚀 Send Via WhatsApp Web</button></div></div>
+      <button class="st" onclick="switchSub('clist')">👥 All Customers</button>
+      <button class="st" onclick="switchSub('csearch')">🔍 Search</button>
+    </div>
+    <div class="panel on" id="sub-register">
+      <div class="card">
+        <div class="ct">🆕 Register New Customer</div>
+        <div class="fgrid">
+          <div class="fg"><label>Customer Name *</label><input id="rn" placeholder="Poora naam"></div>
+          <div class="fg"><label>Mobile * (= ID)</label><input type="tel" id="rm" maxlength="10" placeholder="10 digit mobile"></div>
+          <div class="fg"><label>Address</label><input id="ra" placeholder="Mohalla / Colony"></div>
+          <div class="fg"><label>Referral Employee ID (Optional)</label><input id="r-ref" maxlength="12" placeholder="12 digit Aadhar"></div>
+        </div>
+        <button class="btn bp" onclick="registerCustomer()">✅ Register</button>
+        <button class="btn bg" onclick="clearReg()" style="margin-left:8px">🔄 Clear</button>
+      </div>
+    </div>
+    <div class="panel" id="sub-clist">
+      <div class="card">
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="f-s" placeholder="🔍 Search..." oninput="renderCList()" style="flex:1;min-width:140px;border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.85rem;outline:none;color:var(--brown)">
+          <select id="f-z" onchange="renderCList()" style="border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.82rem;outline:none;color:var(--brown)">
+            <option value="">All Zones</option>
+            <option value="green">🟢 Green</option><option value="blue">🔵 Blue</option>
+            <option value="yellow">🟡 Yellow</option><option value="red">🔴 Red</option>
+          </select>
+          <button class="btn bxl" onclick="exportExcel()">📊 Excel</button>
+        </div>
+        <div class="tw">
+          <table><thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Location</th><th>Last Order</th><th>Next Expected</th><th>Zone</th><th>Actions</th></tr></thead>
+          <tbody id="c-tbody"></tbody></table>
+          <div id="c-empty" style="display:none;text-align:center;padding:40px;color:#ccc">Koi customer nahi mila</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="sub-csearch">
+      <div class="sh-box">
+        <h2>🔍 Customer Search</h2>
+        <p>Mobile number dalein — poori history ek jagah</p>
+        <div class="sb">
+          <input type="tel" id="cs-in" maxlength="10" placeholder="10-digit mobile..." oninput="if(this.value.length>=10)doCSrch()">
+          <button onclick="doCSrch()">Search</button>
+        </div>
+      </div>
+      <div id="cs-result"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-order">
+    <div class="card">
+      <div class="ct">🛒 Add New Order</div>
+      <div class="fgrid">
+        <div class="fg"><label>Customer Mobile *</label><input type="tel" id="om" maxlength="10" placeholder="10 digit" oninput="lookupC()"></div>
+        <div class="fg"><label>Customer Name</label><input id="on" readonly placeholder="Auto-fill" style="background:#F5F0EA;color:#999"></div>
+        <div class="fg"><label>Order Date</label><input type="date" id="od"></div>
+        <div class="fg"><label>Next Expected Date</label><input type="date" id="oexp"></div>
+        <div class="fg"><label>Note</label><input id="ono" placeholder="Home delivery, urgent etc."></div>
+      </div>
+      <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--amber);margin-bottom:8px">Products</div>
+      <div class="pgrid" id="prod-grid"></div>
+      <div class="tb2">
+        <div><div class="tl2">Order Total</div><div class="tv" id="o-total">₹0</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn bp" onclick="addOrder()">✅ Save Order</button>
+          <button class="btn bwa" onclick="sendWABill()">📱 WA Bill</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">🧺 Manage Products</div>
+      <div style="background:var(--cream);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div class="fgrid" style="margin-bottom:10px">
+          <div class="fg"><label>Product Name *</label><input id="np-name" placeholder="e.g. Lassi"></div>
+          <div class="fg"><label>Emoji</label><input id="np-icon" placeholder="🥛" maxlength="4"></div>
+          <div class="fg"><label>Unit</label><select id="np-unit"><option value="L">Litre</option><option value="Kg">Kilogram</option><option value="Pcs">Pieces</option><option value="g">Grams</option><option value="Packet">Packet</option></select></div>
+          <div class="fg"><label>Default Qty</label><input type="number" id="np-qty" value="1" min="0.1" step="0.1"></div>
+        </div>
+        <button class="btn bp" onclick="addProduct()">➕ Add Product</button>
+      </div>
+      <div id="prod-list-manage" style="font-size:0.82rem"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-today">
+    <div class="card">
+      <div class="ct">📅 Today's Expected Orders</div>
+      <p style="font-size:0.78rem;color:#999;margin-bottom:12px">Jin customers ki aaj expected delivery date hai</p>
+      <div id="today-list"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-delivery">
+    <div class="del-header"><h2>🥛 Daily Milk Delivery</h2><p>Roz ki delivery, payment aur rate management</p></div>
+    <div class="stabs">
+      <button class="st del on" onclick="switchDel('dmark')">📋 Mark Delivery</button>
+      <button class="st del" onclick="switchDel('dhistory')">📅 History</button>
+      <button class="st del" onclick="switchDel('dpayment')">💰 Payment</button>
+      <button class="st del" onclick="switchDel('drate')">⚙️ Rate Set</button>
+      <button class="st del" onclick="switchDel('dsummary')">📊 Summary</button>
+    </div>
+
+    <div class="panel on" id="dsub-dmark">
+      <div class="card">
+        <div class="ct">📋 Aaj ki Delivery Mark Karo</div>
+        <div style="font-size:0.8rem;color:#999;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <span id="del-today-lbl"></span>
+          <input type="date" id="del-date" onchange="renderDeliveryMark()" style="border:2px solid #EDE0D4;border-radius:9px;padding:7px 12px;font-size:0.82rem;outline:none;color:var(--brown)">
+        </div>
+        <div id="delivery-list"></div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn bblu" onclick="saveDeliveries()">✅ Save Delivery</button>
+          <button class="btn bwa" onclick="sendAllDeliveryWA()">📱 Referral ko WA</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="dsub-dhistory">
+      <div class="card">
+        <div class="ct">📅 Date-wise Delivery History</div>
+        <div class="fgrid" style="margin-bottom:14px">
+          <div class="fg"><label>Customer Mobile</label><input type="tel" id="dh-mob" maxlength="10" placeholder="Mobile dalein..." oninput="if(this.value.length>=10)renderDelHistory()"></div>
+          <div class="fg"><label>Month</label><input type="month" id="dh-month" onchange="renderDelHistory()"></div>
+        </div>
+        <div id="del-history-result"><div style="color:#ccc;text-align:center;padding:30px">Mobile number dalein</div></div>
+      </div>
+      <div class="card">
+        <div class="ct">📆 Sabhi Customers — Date Wise</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+          <div class="fg" style="margin:0;flex:1">
+            <label>Date Select Karo</label>
+            <input type="date" id="dw-date" onchange="renderDateWise()" style="border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.85rem;outline:none;color:var(--brown);width:100%">
+          </div>
+        </div>
+        <div id="datewise-result"><div style="color:#ccc;text-align:center;padding:20px">Date select karein</div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="dsub-dpayment">
+      <div class="card">
+        <div class="ct">💰 Payment Record Karo</div>
+        <div class="fgrid">
+          <div class="fg"><label>Customer Mobile *</label><input type="tel" id="pay-mob" maxlength="10" placeholder="10 digit" oninput="lookupPayC()"></div>
+          <div class="fg"><label>Customer Name</label><input id="pay-name" readonly placeholder="Auto-fill" style="background:#F5F0EA;color:#999"></div>
+          <div class="fg"><label>Payment Date</label><input type="date" id="pay-date"></div>
+          <div class="fg"><label>Amount (₹)</label><input type="number" id="pay-amt" placeholder="Kitna mila"></div>
+          <div class="fg"><label>Mode (Cash/UPI etc.)</label><input id="pay-note" placeholder="Cash / UPI / Cheque"></div>
+        </div>
+        <div style="background:var(--cream);border-radius:10px;padding:14px;margin-bottom:14px" id="pay-pending-box">
+          <div style="color:#999;font-size:0.82rem;text-align:center">Customer mobile dalein to pending amount dikhega</div>
+        </div>
+        <button class="btn bp" onclick="savePayment()">✅ Payment Save</button>
+      </div>
+      <div class="card">
+        <div class="ct">💳 Payment History</div>
+        <div class="fgrid" style="margin-bottom:12px">
+          <div class="fg"><label>Customer Mobile</label><input type="tel" id="payh-mob" maxlength="10" placeholder="Mobile dalein..." oninput="if(this.value.length>=10)renderPayHistory()"></div>
+          <div class="fg"><label>Month</label><input type="month" id="payh-month" onchange="renderPayHistory()"></div>
+        </div>
+        <div id="pay-history-result"><div style="color:#ccc;text-align:center;padding:20px">Mobile number dalein</div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="dsub-drate">
+      <div class="card">
+        <div class="ct">⚙️ Customer Rate &amp; Delivery Setup</div>
+        <p style="font-size:0.78rem;color:#999;margin-bottom:16px">Customer ko delivery list mein add karo aur rate set karo</p>
+        <div id="rate-list"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="dsub-dsummary">
+      <div class="card">
+        <div class="ct">📊 Monthly Delivery Summary</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+          <input type="month" id="sum-month" onchange="renderSummary()" style="border:2px solid #EDE0D4;border-radius:9px;padding:9px 12px;font-size:0.85rem;outline:none;color:var(--brown)">
+          <button class="btn bxl" onclick="exportDeliveryExcel()">📊 Excel Export</button>
+        </div>
+        <div id="summary-result"><div style="color:#ccc;text-align:center;padding:30px">Month select karein</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-employee">
+    <div class="emp-header"><h2>👔 Employees Corner</h2><p>Management, referrals & performance</p></div>
+    <div class="stabs">
+      <button class="st emp on" onclick="switchEmp('ereg')">➕ Register</button>
+      <button class="st emp" onclick="switchEmp('elist')">👥 All</button>
+      <button class="st emp" onclick="switchEmp('esearch')">🔍 Search</button>
+      <button class="st emp" onclick="switchEmp('ereport')">📊 Report</button>
+    </div>
+    <div class="panel on" id="esub-ereg">
+      <div class="card">
+        <div class="ct" style="color:#5b21b6">🆕 Register Employee</div>
+        <div class="fgrid">
+          <div class="fg"><label>Name *</label><input id="en" placeholder="Poora naam"></div>
+          <div class="fg"><label>Aadhar No. * (= ID)</label><input type="tel" id="ea" maxlength="12" placeholder="12 digit"></div>
+          <div class="fg"><label>Mobile *</label><input type="tel" id="em" maxlength="10" placeholder="10 digit"></div>
+          <div class="fg"><label>Address</label><input id="eaddr" placeholder="Address"></div>
+          <div class="fg"><label>Role</label><input id="erole" placeholder="e.g. Delivery Boy / Manager"></div>
+        </div>
+        <button class="btn bemp" onclick="registerEmployee()">✅ Save Employee</button>
+      </div>
+    </div>
+    <div class="panel" id="sub-elist">
+      <div class="card">
+        <div class="tw">
+          <table><thead><tr><th>Aadhar (ID)</th><th>Name</th><th>Mobile</th><th>Role</th><th>Referrals</th></tr></thead>
+          <tbody id="e-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="sub-esearch">
+      <div class="sh-box" style="background:linear-gradient(135deg,#2e1065,#5b21b6)">
+        <h2>🔍 Employee Search</h2>
+        <p>Aadhar card number dalein</p>
+        <div class="sb">
+          <input type="tel" id="es-in" maxlength="12" placeholder="12-digit Aadhar..." oninput="if(this.value.length>=12)doESrch()">
+          <button onclick="doESrch()" style="background:var(--amber)">Search</button>
+        </div>
+      </div>
+      <div id="es-result"></div>
+    </div>
+    <div class="panel" id="sub-ereport">
+      <div class="card">
+        <div class="ct">📊 Employee Performance Report</div>
+        <div id="e-report-div"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="mo" id="mo-bc"><div class="modal"><div class="mh"><h2>📢 Broadcast WhatsApp Message</h2><button class="mx" onclick="closeBcast()">✕</button></div><div class="fg"><label>Select Target Group</label><select id="bc-grp"><option value="all">Sabhi Customers</option><option value="green">🟢 Green Zone</option><option value="blue">🔵 Blue Zone</option><option value="yellow">🟡 Yellow Zone</option><option value="red">🔴 Red Zone</option></select></div><div class="fg"><label>Message Template</label><textarea id="bc-msg" rows="5" placeholder="Message likhein... Use {name} for Customer name"></textarea></div><button class="btn bwa" onclick="sendBcast()">🚀 Send Via WhatsApp Web</button></div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // ==========================================
-// FIREBASE CONFIGURATION
+// FIREBASE CONFIGURATION (AUTOMATICALLY LOADED FROM YOUR SCREENSHOT)
 // ==========================================
-var FIREBASE_URL = "YOUR_FIREBASE_URL_HERE";
+var FIREBASE_URL = "https://kamal-dairy-default-rtdb.firebaseio.com";
 
 if(FIREBASE_URL.endsWith("/")) {
   FIREBASE_URL = FIREBASE_URL.slice(0, -1);
@@ -266,7 +497,7 @@ function loadAllData() {
         
         initApp();
       } else {
-        alert("Firebase URL galat hai ya Database rules Lock hain! Kripya rules public karein.");
+        alert("Firebase Database Error! Kripya check karein ki Rules public hain ya nahi.");
       }
     }
   };
@@ -274,10 +505,6 @@ function loadAllData() {
 }
 
 window.onload = function() {
-  if(!FIREBASE_URL || FIREBASE_URL.includes("YOUR_FIREBASE_URL_HERE")) {
-    document.getElementById('loading-text').innerHTML = "<span style='color:#EF4444'>Error:</span> Line 432 par apna Firebase URL dalein!";
-    return;
-  }
   loadAllData();
 };
 
@@ -411,6 +638,7 @@ function switchSub(p) {
   event.target.className="st on";
 }
 
+// REST OF APPLICATION ENGINE
 function switchDel(p) {
   document.querySelectorAll('#panel-delivery > .panel').forEach(function(el){el.className="panel";});
   document.getElementById('dsub-'+p).className="panel on";
@@ -471,6 +699,7 @@ function renderCList() {
   var search = document.getElementById('f-s').value.toLowerCase();
   var zone = document.getElementById('f-z').value;
   var tbody = document.getElementById('c-tbody');
+  if(!tbody) return;
   tbody.innerHTML = '';
   
   var filtered = DB.filter(function(c){
@@ -677,9 +906,6 @@ function renderToday() {
   }).join('');
 }
 
-// ==========================================
-// DAILY DELIVERY LOGIC (FIREBASE CLOUD)
-// ==========================================
 function renderRateSetup() {
   var div = document.getElementById('rate-list');
   div.innerHTML = DB.map(function(c){
@@ -837,9 +1063,6 @@ function renderDateWise() {
   res.innerHTML = html;
 }
 
-// ==========================================
-// PAYMENT SYSTEM
-// ==========================================
 function lookupPayC() {
   var m = document.getElementById('pay-mob').value;
   var box = document.getElementById('pay-pending-box');
@@ -911,9 +1134,6 @@ function renderPayHistory() {
   res.innerHTML = html;
 }
 
-// ==========================================
-// SUMMARY AND REPORTS
-// ==========================================
 function renderSummary() {
   var month = document.getElementById('sum-month').value;
   var res = document.getElementById('summary-result');
@@ -963,9 +1183,6 @@ function renderSummary() {
   res.innerHTML = html;
 }
 
-// ==========================================
-// EMPLOYEES LOGIC (FIREBASE CLOUD)
-// ==========================================
 function registerEmployee() {
   var name = document.getElementById('en').value.trim();
   var aadhar = document.getElementById('ea').value.trim();
@@ -1043,7 +1260,6 @@ function doESrch() {
   res.innerHTML = '<div class="card"><h4>👔 '+e.name+' ('+e.role+')</h4><p>📞 '+e.mobile+' | 🏠 '+(e.address||'-')+'</p><p style="margin-top:8px;font-weight:bold;color:#7c3aed">Brought '+refs.length+' customers onto the platform.</p></div>';
 }
 
-// WhatsApp Actions
 function openSingleWA(mob, text) {
   window.open("https://web.whatsapp.com/send?phone=91"+mob+"&text="+encodeURIComponent(text), "_blank");
 }
@@ -1095,7 +1311,6 @@ function sendAllDeliveryWA() {
   if(cCount===0) showToast("Koi aisi entries nahi hain jisme referral boy ka Aadhar saved ho.");
 }
 
-// Excel Export Utilities
 function exportExcel() {
   var data = DB.map(function(c){
     return {
